@@ -14,6 +14,7 @@
 #include "driver/uart.h"
 
 #include "max30003.h"
+#include "ble.h"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -258,6 +259,8 @@ void max30003_read_send_data(void)
       DataPacketHeader[18] = 0x0b;
 
       uart_write_bytes(UART_NUM_1, (const char *) DataPacketHeader, 19);
+	  update_ble_atts(update_hr,(uint16_t)HR);
+	  update_ble_atts(update_rr,(uint16_t)RR);	
     }
 }
 

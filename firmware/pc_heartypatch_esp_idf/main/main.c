@@ -26,11 +26,13 @@
 #include "esp_log.h"
 #include "kalam32.h"
 #include "max30003.h"
+#include "max30205.h"
+#include "ble.h"
 
-#include "drv_max30205.h"
+
+extern xSemaphoreHandle print_mux;
 
 char uart_data[50];
-
 const int uart_num = UART_NUM_1;
 #define BUF_SIZE  1000
 char HostAddress[255] = AWS_IOT_MQTT_HOST;
@@ -326,6 +328,7 @@ void app_main(void)
 
     //kalam32_uart_init();
     kalam_wifi_init();
+	kalam_ble_Init();
 
     max30003_initchip(PIN_SPI_MISO,PIN_SPI_MOSI,PIN_SPI_SCK,PIN_SPI_CS);
     //max30205_initchip(PIN_I2C_SDA,PIN_I2C_SCL);
@@ -346,6 +349,11 @@ void app_main(void)
 #else
 
 #endif
+	
+	print_mux = xSemaphoreCreateMutex();   
+    i2c_example_master_init();
+    xTaskCreate(i2c_read_temp_max30205, "readTemperature", 1024 * 2, (void* ) 0, 10, NULL);
+
     while (true)
     {
         gpio_set_level(GPIO_NUM_5, 1);
