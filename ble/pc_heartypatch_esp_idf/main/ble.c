@@ -178,10 +178,10 @@ static void gatts_profile_hr_event_handler(esp_gatts_cb_event_t event, esp_gatt_
 			rsp.attr_value.len = 4;
 			
 			rsp.attr_value.value[0] = (BLE_HR_FLAG) | (ble_data_update.flag); 	//flag:: setas - 8 bit HR, 16 bit energy expended, 16 bit RR 
-			rsp.attr_value.value[1] =22; //ble_data_update.hr;						// LSO of HR
-			//rsp.attr_value.value[2] = ((ble_data_update.hr)>>8);				//MSO of HR
-			rsp.attr_value.value[2] =13;// ble_data_update.rr;
-			rsp.attr_value.value[3] =00;// ((ble_data_update.rr)>>8);
+			rsp.attr_value.value[1] =ble_data_update.hr;						
+			//rsp.attr_value.value[2] = ((ble_data_update.hr)>>8);				
+			rsp.attr_value.value[2] =ble_data_update.rr;
+			rsp.attr_value.value[3] =((ble_data_update.rr)>>8);
 
 			esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
 										ESP_GATT_OK, &rsp);
@@ -281,8 +281,8 @@ static void gatts_profile_temp_event_handler(esp_gatts_cb_event_t event, esp_gat
         memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
         rsp.attr_value.handle = param->read.handle;
         rsp.attr_value.len = 2;
-        rsp.attr_value.value[0] = ((ble_data_update.temperature)>>8);
-        rsp.attr_value.value[1] = (ble_data_update.temperature);
+        rsp.attr_value.value[0] =(ble_data_update.temperature);
+        rsp.attr_value.value[1] =((ble_data_update.temperature)>>8); 
 		
         esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
                                     ESP_GATT_OK, &rsp);
@@ -424,7 +424,7 @@ void kalam_ble_Init(void)
 
 	esp_err_t ret;
 
-    esp_bt_controller_init(&cfg);
+    esp_bt_controller_init();
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BTDM);
     if (ret) 

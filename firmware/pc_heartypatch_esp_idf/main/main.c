@@ -326,7 +326,7 @@ void app_main(void)
 
     nvs_flash_init();
 
-    //kalam32_uart_init();
+    kalam32_uart_init();
     kalam_wifi_init();
 	kalam_ble_Init();
 
@@ -364,8 +364,8 @@ void app_main(void)
         //max_temp=max30205_readTemperature();
         //printf("Temp: %f\n", max_temp);
 
-        //MAX30003_ReadID();
-        //max30003_read_send_data();
+        MAX30003_ReadID();
+        max30003_read_send_data();
         //uart_write_bytes(uart_num, (const char *) uart_data, 25);
         //uart_tx_chars(uart_num, (const char *) uart_data, 5);
         //putc('a',stdout);
