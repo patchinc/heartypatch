@@ -193,9 +193,6 @@ public void setup()
     myClient = new Client(this, "heartypatch.local", 4567);
     startPlot = true;
     
-    mqttclient = new MQTTClient(this);
-    mqttclient.connect("35.154.235.168", "c29fa450-2a72-11e7-8a1f-75493aa1b859",true);
-    //client.subscribe("/example");
 }
 
 void messageReceived(String topic, byte[] payload) {
@@ -212,6 +209,7 @@ void clientEvent(Client someClient)
   */
   inString = myClient.readChar();
   pc_processData(inString);
+
 }
 
 public void draw() 
@@ -356,6 +354,7 @@ void pc_processData(char rxch)
 
         int data1 = pc_AssembleBytes(ces_pkt_ecg_bytes, ces_pkt_ecg_bytes.length-1);
         ecg = (double) data1/(Math.pow(10, 3));
+        println(ecg);
         
         int data2 = pc_AssembleBytes(ces_pkt_rtor_bytes, ces_pkt_rtor_bytes.length-1);
         rtor_value = (double) data2; ///(Math.pow(10, 3));

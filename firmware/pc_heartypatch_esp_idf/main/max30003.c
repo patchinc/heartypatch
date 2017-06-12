@@ -14,6 +14,7 @@
 #include "driver/uart.h"
 
 #include "max30003.h"
+//#include "ble.h"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -28,7 +29,7 @@ spi_device_handle_t spi;
 //This function is called (in irq context!) just before a transmission starts.
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
 {
-
+;
 }
 
 void max30003_start_timer(void)
@@ -103,7 +104,7 @@ void MAX30003_ReadID(void)
    t.user=(void*)0;                //D/C needs to be set to 0
    ret=spi_device_transmit(spi, &t);  //Transmit!
    assert(ret==ESP_OK);            //Should have had no issues.
-   printf("ID:%x,%x,%x\n",SPI_RX_Buff[3],SPI_RX_Buff[2],SPI_RX_Buff[1]);
+   //printf("ID:%x,%x,%x\n",SPI_RX_Buff[3],SPI_RX_Buff[2],SPI_RX_Buff[1]);
 }
 
 void max30003_reg_read(unsigned char WRITE_ADDRESS)
@@ -119,13 +120,13 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));       //Zero out the transaction
 
-    t.length=32;                     //Command is 8 bits
+    t.length=32;
     t.rxlength=32;
-    t.tx_buffer=&SPI_TX_Buff;               //The data is the cmd itself
+    t.tx_buffer=&SPI_TX_Buff;
     t.rx_buffer=&SPI_RX_Buff;
 
-    t.user=(void*)0;                //D/C needs to be set to 0
-    ret=spi_device_transmit(spi, &t);  //Transmit!
+    t.user=(void*)0;
+    ret=spi_device_transmit(spi, &t);
     assert(ret==ESP_OK);            //Should have had no issues.
 
     SPI_temp_32b[0] = SPI_RX_Buff[1];
@@ -133,6 +134,17 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
     SPI_temp_32b[2] = SPI_RX_Buff[3];
 
     //printf("%x,%x,%x,OK",SPI_RX_Buff[0],SPI_RX_Buff[1],SPI_RX_Buff[2]);
+}
+
+void read_data(void *pvParameters)			// calls max30003read_data to update to aws_iot.
+{
+ 	uint8_t* db;
+
+    while(1)
+    {
+  		db = max30003_read_data();
+  		vTaskDelay(1000/portTICK_RATE_MS);
+    }
 }
 
 void max30003_sw_reset(void)
@@ -148,7 +160,9 @@ void max30003_synch(void)
 
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 {
+
     esp_err_t ret;
+	//aws_data_update.flag =0;
 
     spi_bus_config_t buscfg=
     {
@@ -161,9 +175,9 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 
     spi_device_interface_config_t devcfg=
     {
-        .clock_speed_hz=4000000,               //Clock out at 10 MHz
-        .mode=0,                                //SPI mode 0
-        .spics_io_num=pin_cs,               //CS pin
+        .clock_speed_hz=4000000,             	  //Clock out at 10 MHz
+        .mode=0,                               	 //SPI mode 0
+        .spics_io_num=pin_cs,              		 //CS pin
         .queue_size=7,                          //We want to be able to queue 7 transactions at a time
         .pre_cb=max30003_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
@@ -200,13 +214,16 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_synch();
 
     vTaskDelay(100 / portTICK_PERIOD_MS);
+
 }
 
 void max30003_read_send_data(void)
 {
     max30003_reg_read(STATUS);
 
-    if((SPI_temp_32b[1]&0x80)==1)
+   // if((SPI_temp_32b[1]&0x80)==1)
+	// if((SPI_temp_32b[0]&0x80)==1)
+
     {
       max30003_reg_read(ECG_FIFO);
 
@@ -256,13 +273,12 @@ void max30003_read_send_data(void)
 
       DataPacketHeader[17] = 0x00;
       DataPacketHeader[18] = 0x0b;
-
-      uart_write_bytes(UART_NUM_1, (const char *) DataPacketHeader, 19);
     }
 }
 
 uint8_t* max30003_read_data(void)
 {
+
     max30003_reg_read(ECG_FIFO);
 
     unsigned long data0 = (unsigned long) (SPI_temp_32b[1]);
@@ -288,34 +304,20 @@ uint8_t* max30003_read_data(void)
     unsigned int HR = (unsigned int)hr;  // type cast to int
     unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-    DataPacketHeader[0] = 0x0A;
-    DataPacketHeader[1] = 0xFA;
-    DataPacketHeader[2] = 0x0C;
-    DataPacketHeader[3] = 0;
-    DataPacketHeader[4] = 0x02;
+		// update_AWS_atts(update_hr,(uint16_t)HR);				//disabled for aws test
+		// update_AWS_atts(update_rr,(uint16_t)RR);
 
-    DataPacketHeader[5] = ecgdata;
-    DataPacketHeader[6] = ecgdata>>8;
-    DataPacketHeader[7] = ecgdata>>16;
-    DataPacketHeader[8] = ecgdata>>24;
-
-    DataPacketHeader[9] =  RR ;
-    DataPacketHeader[10] = RR >>8;
-    DataPacketHeader[11] = 0x00;
-    DataPacketHeader[12] = 0x00;
-
-    DataPacketHeader[13] = HR ;
-    DataPacketHeader[14] = HR >>8;
-    DataPacketHeader[15] = 0x00;
-    DataPacketHeader[16] = 0x00;
-
-    DataPacketHeader[17] = 0x00;
-    DataPacketHeader[18] = 0x0b;
-
-    return DataPacketHeader;
-    //uart_write_bytes(UART_NUM_1, (const char *) DataPacketHeader, 19);
+     return DataPacketHeader;
 }
 
+void kalam_start_max30003()
+{
+  TaskHandle_t rd_task;
+
+  //task to call max30003_read_data, added for dbug
+  xTaskCreate(&read_data, "read_data", 4096, NULL, 4, &rd_task);
+
+}
 void heartyPatch_send_data(uint8_t *dataToSend, int dataLength)
 {
 

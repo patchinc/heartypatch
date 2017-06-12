@@ -26,6 +26,7 @@
 
 #define PIN_NUM_FCLK      13
 
+void kalam_start_max30003();
 void max30003_start_timer(void);
 void MAX30003_ReadID(void);
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs );
