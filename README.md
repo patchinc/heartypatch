@@ -1,9 +1,13 @@
 ProtoCentral Hearty Patch Single-lead ECG monitor
 =======================================================
 
-This repository contains the hardware, firmware and GUI software plans for the HeartyPatch single-lead ECG monitoring device.
+This repository contains the hardware, firmware and GUI software plans for the HeartyPatch single-lead ECG and R-R interval monitoring device.
 
-For details and updates, check out our Hackaday Page: [https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32](https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32)
+![HeartyPatch](docs/images/heartypatch-small.jpg)
+
+![HeartyPatch Screenshot](docs/images/heartypatch-screen.jpg)
+
+### For details and updates, check out our Hackaday Page: [https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32](https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32)
 
 
 License Information

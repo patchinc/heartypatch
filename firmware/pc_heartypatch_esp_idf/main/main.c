@@ -19,27 +19,18 @@
 #include "driver/uart.h"
 #include "driver/sdmmc_host.h"
 
-#include "lwip/err.h"
-#include "lwip/sockets.h"
-#include "lwip/sys.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
+#include "aws_iot_config.h"
+#include "aws_iot_log.h"
+#include "aws_iot_version.h"
+#include "aws_iot_mqtt_client_interface.h"
 
 #include "mdns.h"
 #include "esp_log.h"
 #include "kalam32.h"
 #include "max30003.h"
 #include "max30205.h"
+#include "aws.h"
 #include "kalam32_tcp_server.h"
-
-#include "mbedtls/platform.h"
-#include "mbedtls/net.h"
-#include "mbedtls/debug.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/error.h"
-#include "mbedtls/certs.h"
 //#include "ble.h"
 
 //void kalam_tcp_start(void);				//added for dbg
@@ -67,8 +58,6 @@ const int CONNECTED_BIT_kalam = BIT0;
 
  	uint8_t* db;
 mdns_server_t * mdns = NULL;
-
-
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -131,7 +120,6 @@ void kalam_wifi_init(void)
 
 }
 
-void kalam_https_start();
 
 void app_main(void)
 {
@@ -148,18 +136,17 @@ void app_main(void)
     kalam_start_max30003();
     //kalam32_uart_init();
 
-
     kalam_wifi_init();
+
     //kalam_ble_Init();
     /* Wait for WiFI to show as connected */
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT_kalam,
                     false, true, portMAX_DELAY);
-    kalam_https_start();
-    
+
 #if KALAM32_TCP_ENABLED == TRUE
     //kalam_tcp_start();
 #endif
-    //kalam_aws_start();
+    kalam_aws_start();
 
     while (true)
     {

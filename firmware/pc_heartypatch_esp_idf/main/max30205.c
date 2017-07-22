@@ -13,6 +13,7 @@
 #include "driver/i2c.h"
 #include "max30205.h"
 //#include "ble.h"
+#include "aws.h"
 
 int max30205_read_temp(i2c_port_t i2c_num, uint8_t* data_h, uint8_t* data_l)
 {
@@ -99,7 +100,7 @@ void i2c_read_temp_max30205(void* arg)
 			temperature_val=(((temp_val<<8) | sensor_data_l )* 0.00390625);
 			//update_ble_atts(update_temp,temperature_val);					//disabled for aws test
 
-			//update_temp(temperature_val);
+			update_temp(temperature_val);
 
         vTaskDelay(( DELAY_TIME_BETWEEN_ITEMS_MS * ( task_idx + 1 ) ) / portTICK_RATE_MS);
 

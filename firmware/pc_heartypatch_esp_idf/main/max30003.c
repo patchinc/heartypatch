@@ -15,6 +15,7 @@
 
 #include "max30003.h"
 //#include "ble.h"
+#include "aws.h"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -304,8 +305,8 @@ uint8_t* max30003_read_data(void)
     unsigned int HR = (unsigned int)hr;  // type cast to int
     unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-		// update_AWS_atts(update_hr,(uint16_t)HR);				//disabled for aws test
-		// update_AWS_atts(update_rr,(uint16_t)RR);
+		 update_AWS_atts(update_hr,(uint16_t)HR);				//disabled for aws test
+		 update_AWS_atts(update_rr,(uint16_t)RR);
 
      return DataPacketHeader;
 }

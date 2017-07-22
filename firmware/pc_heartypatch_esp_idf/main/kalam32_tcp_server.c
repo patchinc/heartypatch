@@ -19,6 +19,10 @@
 #include "driver/uart.h"
 #include "driver/sdmmc_host.h"
 
+#include "aws_iot_config.h"
+#include "aws_iot_log.h"
+#include "aws_iot_version.h"
+#include "aws_iot_mqtt_client_interface.h"
 #include "kalam32_tcp_server.h"
 
 #include "mdns.h"
@@ -26,6 +30,7 @@
 #include "kalam32.h"
 #include "max30003.h"
 #include "max30205.h"
+#include "aws.h"
 #include "kalam32_tcp_server.h"
 
 #define TAG "heartypatch:"
@@ -232,7 +237,7 @@ void tcp_conn(void *pvParameters)
 
 void kalam_tcp_start(void)
 {
- xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
+ xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);	
 }
 
 /*********************** END TCP Server Code *****************/
