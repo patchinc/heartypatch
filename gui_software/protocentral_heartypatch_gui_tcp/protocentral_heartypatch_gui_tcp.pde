@@ -191,7 +191,7 @@ public void setup()
   time = 0;
   
 //    myClient = new Client(this, "heartypatch.local", 4567);
-    myClient = new Client(this, "192.168.1.105", 4567);
+    myClient = new Client(this, "192.168.1.117", 4567);
     startPlot = true;
     
 }
