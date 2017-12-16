@@ -1,18 +1,18 @@
-![Healthy Pi Hat](images/hpi3-with-display.jpg)
+![Healthy Pi Hat](images/heartypatch2.jpg)
 
-HealthyPi is the first fully open-source, full-featured vital sign monitor. Using the Raspberry Pi as its computing and display platform, the HealthyPi add-on HAT turns the Raspberry Pi into a vital sign monitoring system.
+HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with HRV (Heart Rate Variability) analysis. It is based on the popular ESP32 system-on-a-chip.
 
-If you don't already have one, you can buy [HealthyPi at Crowd Supply](https://www.crowdsupply.com/protocentral/healthypi-v3).
+If you don't already have one, you can buy one exclusively on [HeartyPatch at Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch).
 
 Repository Contents
 -------------------
-* **/firmware** - Atmel studio and Arduino example sketches.
+* **/firmware** - ESP32 Firmware
 * **/Hardware** - All Eagle design files (.brd, .sch)
-* **/extras** - includes the datasheet
+* **/extras** - includes the datasheets
 * **/gui** - HealthyPi GUI for Raspberry Pi and PC
 * **/docs** - Additional Documentation
 
-# Getting Started with HealthyPi
+# Getting Started with HeartyPatch
 
 The HealthyPi was designed with not just one application in mind, but a variety of them. While it does function as a vital sign monitor for traditional patient monitoring applications, it can also be used for several other applications. You can use it with a Raspberry Pi using a display; use it with a Raspberry Pi with the official touchscreen using our “Complete Kit,” or you can use it standalone by connecting it to any computer’s USB port. The software is compatible across all platforms.
 
