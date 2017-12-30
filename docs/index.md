@@ -12,6 +12,10 @@ With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval
 
 **HeartyPatch can be used with any Android app that supports the heart-rate profile.**
 
+Parts of the HeartyPatch:
+
+![HeartyPatch Parts](images/heartypatch-parts.png)
+
 <iframe src="https://player.vimeo.com/video/249182147" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
 ## The HeartyPatch App for Android - BETA
