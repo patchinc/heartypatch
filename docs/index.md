@@ -4,6 +4,8 @@ HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with
 
 If you don't already have one, you can buy one on [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
 
+[link](#license-information)
+
 # Getting Started with HeartyPatch
 
 If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working.
@@ -12,7 +14,7 @@ With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval
 
 **HeartyPatch can be used with any Android app that supports the heart-rate profile.**
 
-### Parts of the HeartyPatch:
+### Parts of the HeartyPatch
 
 ![HeartyPatch Parts](images/heartypatch-parts.png)
 
@@ -28,15 +30,13 @@ You can download and install the app from the [Google Play Store](https://play.g
 
 *Note: The android app for HeartyPatch is still in BETA and there might be some instability as a result.*
 
-## Updating the firmware
+# Updating the firmware
+
+To install new firmware and/or compile your own firmware, check out **[Guide to Firmware Upgrades](firmware-upgrades.md).**
 
 It is important to always keep your firmware up-to-date for best results. We keep adding changes, bug fixes and enhancements as and when we do updates. HeartyPatch will continue to be developed and new features added.
 
-Be on the lookout for new firmware releases on our Github releases page at:
-
-https://github.com/Protocentral/protocentral_heartypatch
-
-To install the new firmware and/or try out your own firmware, check out new [Guide to Firmware Upgrades](firmware-upgrades.md).
+Be on the lookout for new firmware releases on our Github releases page at https://github.com/Protocentral/protocentral_heartypatch
 
 *Please submit an [issue on Github](https://github.com/Protocentral/protocentral-healthypi-v3/issues/new) if you face any problems with the HealthyPi.*
 

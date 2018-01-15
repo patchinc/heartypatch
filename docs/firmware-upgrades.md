@@ -1,4 +1,4 @@
-# Upgrading HeartyPatch Firmware
+# Compiling HeartyPatch Firmware
 
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the esp-idf framework for development. You will need to install and configure the following components to setup a development environment:
 
