@@ -1,5 +1,13 @@
-
 title: HeartyPatch Documentation
 twitter_username: protocentral
 github_username:  protocentral
 remote_theme: "mmistakes/minimal-mistakes"
+description: "HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with HRV (Heart Rate Variability) analysis. It is based on the popular ESP32 system-on-a-chip."
+defaults:
+  # _docs
+  - scope:
+      path: ""
+      type: docs
+    values:
+      sidebar:
+        nav: "docs"
