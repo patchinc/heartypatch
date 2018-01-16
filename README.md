@@ -3,6 +3,8 @@ ProtoCentral Hearty Patch Single-lead ECG monitor
 
 This repository contains the hardware, firmware and GUI software plans for the HeartyPatch single-lead ECG and R-R interval monitoring device.
 
+## Detailed documentation is available at [heartypatch.protocentral.com](http://heartypatch.protocentral.com/)
+
 ![HeartyPatch](docs/images/heartypatch2.jpg)
 
 ![HeartyPatch Screenshot](docs/images/heartypatch-screen.jpg)
@@ -11,6 +13,7 @@ This repository contains the hardware, firmware and GUI software plans for the H
 
 ### You can now buy HeartyPatch !!!
 ### Support us at https://www.crowdsupply.com/protocentral/heartypatch
+
 
 License Information
 ===================

@@ -4,8 +4,6 @@ HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with
 
 If you don't already have one, you can buy one on [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
 
-[link](#license-information)
-
 # Getting Started with HeartyPatch
 
 If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working.
