@@ -1,12 +1,5 @@
-theme: jekyll-theme-minimal
+
 title: HeartyPatch Documentation
 twitter_username: protocentral
 github_username:  protocentral
-defaults:
-  # _docs
-  - scope:
-      path: ""
-      type: docs
-    values:
-      sidebar:
-        nav: "docs"
+remote_theme: "mmistakes/minimal-mistakes"
