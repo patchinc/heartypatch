@@ -6,7 +6,7 @@ description: "HeartyPatch is a completely open source, single-lead, ECG-HR weara
 defaults:
   - scope:
       path: ""
-      type: posts
+      type: pages
   values:
     toc: true
     toc_label: "My Table of Contents"
