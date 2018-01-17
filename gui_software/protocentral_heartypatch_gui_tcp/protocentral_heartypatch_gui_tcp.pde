@@ -43,9 +43,12 @@ import java.io.BufferedWriter;
 import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.net.UnknownHostException;
 
 // General Java Package
 import java.math.*;
+
+import controlP5.*;
 
 /************** Packet Validation  **********************/
 private static final int CESState_Init = 0;
@@ -136,6 +139,12 @@ int nPointsTCG=tcgpSize;
 int totalPlotsHeight=0;
 int totalPlotsWidth=0;
 
+ControlP5 cp5;
+
+Textlabel lblHR;
+Textlabel lblRTOR;
+
+
 public void setup() 
 {
   println(System.getProperty("os.name"));
@@ -146,11 +155,12 @@ public void setup()
   size(800, 600, JAVA2D);
   //fullScreen();
   /* G4P created Methods */
-  createGUI();
-  customGUI();
+  //createGUI();
+  //customGUI();
   
   totalPlotsHeight=height-50-68-15;
 
+  makeGUI();
   plotECG = new GPlot(this);
   plotECG.setPos(0,170);
   plotECG.setDim(width, (totalPlotsHeight*0.5)-10);
@@ -190,9 +200,9 @@ public void setup()
   }
   time = 0;
   
-//    myClient = new Client(this, "heartypatch.local", 4567);
-    myClient = new Client(this, "192.168.1.117", 4567);
-    startPlot = true;
+    //myClient = new Client(this, "heartypatch.local", 4567);
+    //myClient = new Client(this, "192.168.1.117", 4567);
+    //startPlot = true;
     
 }
 
@@ -255,6 +265,23 @@ public void draw()
 
 /*********************************************** Opening Port Function ******************************************* **************/
 
+void startTCP()
+{
+    String devaddress = cp5.get(Textfield.class,"Address").getText();
+   
+    myClient = new Client(this, devaddress, 4567);
+ 
+    if (true==myClient.active())
+    {
+        showMessageDialog(null, "Connected to "+devaddress, "Connected", INFORMATION_MESSAGE);
+        startPlot = true;  
+    }
+    else
+    {
+        showMessageDialog(null, "Cannot connect to "+devaddress, "Alert", ERROR_MESSAGE);
+
+    }
+}
 void startSerial()
 {
   try
@@ -270,6 +297,131 @@ void startSerial()
     System.exit (0);
   }
 }
+
+public void makeGUI()
+{
+
+  cp5 = new ControlP5(this);
+   cp5.addButton("Connect")
+     .setValue(0)
+     .setPosition(310,10)
+     .setSize(100,40)
+     .setFont(createFont("Impact",15))
+     .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        if (event.getAction() == ControlP5.ACTION_RELEASED) 
+        {
+          startTCP();
+          //cp5.remove(event.getController().getName());
+        }
+      }
+     } 
+     );
+     
+   cp5 = new ControlP5(this);
+   cp5.addButton("Close")
+     .setValue(0)
+     .setPosition(width-110,10)
+     .setSize(100,40)
+     .setFont(createFont("Impact",15))
+     .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        if (event.getAction() == ControlP5.ACTION_RELEASED) 
+        {
+          CloseApp();
+          //cp5.remove(event.getController().getName());
+        }
+      }
+     } 
+     );
+  
+   cp5.addButton("Record")
+     .setValue(0)
+     .setPosition(width-225,10)
+     .setSize(100,40)
+     .setFont(createFont("Impact",15))
+     .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        if (event.getAction() == ControlP5.ACTION_RELEASED) 
+        {
+          RecordData();
+          //cp5.remove(event.getController().getName());
+        }
+      }
+     } 
+     );
+     
+     lblRTOR = cp5.addTextlabel("lblSRTOR")
+      .setText("R-R I: --- msec")
+      .setPosition(width-200,100)
+      .setColorValue(color(255,255,255))
+      .setFont(createFont("Impact",20));
+      
+     lblHR = cp5.addTextlabel("lblHR")
+      .setText("HR: --- bps")
+      .setPosition(width-200,300)
+      .setColorValue(color(255,255,255))
+      .setFont(createFont("Impact",20));
+      
+       cp5.addTextfield("Address")
+           .setPosition(10,10)
+           .setSize(200,25)
+           //.setFont(font)
+           .setFont(createFont("Impact",15))
+           .setFocus(true)
+           .setText("heartypatch.local")
+           .setColorLabel(color(0,0,0))
+           .setColor(color(255,255,255));
+}
+
+public void RecordData()
+{
+    try
+  {
+    jFileChooser = new JFileChooser();
+    jFileChooser.setSelectedFile(new File("log.csv"));
+    jFileChooser.showSaveDialog(null);
+    String filePath = jFileChooser.getSelectedFile()+"";
+
+    if ((filePath.equals("log.txt"))||(filePath.equals("null")))
+    {
+    } else
+    {    
+      logging = true;
+      date = new Date();
+      output = new FileWriter(jFileChooser.getSelectedFile(), true);
+      bufferedWriter = new BufferedWriter(output);
+      bufferedWriter.write(date.toString()+"");
+      bufferedWriter.newLine();
+      bufferedWriter.write("TimeStamp,ECG,SpO2,Respiration");
+      bufferedWriter.newLine();
+    }
+  }
+  catch(Exception e)
+  {
+    println("File Not Found");
+  }
+}
+
+public void CloseApp() 
+{
+  int dialogResult = JOptionPane.showConfirmDialog (null, "Would You Like to Close The Application?");
+  if (dialogResult == JOptionPane.YES_OPTION) {
+    try
+    {
+      //Runtime runtime = Runtime.getRuntime();
+      //Process proc = runtime.exec("sudo shutdown -h now");
+      System.exit(0);
+    }
+    catch(Exception e)
+    {
+      exit();
+    }
+  } else
+  {
+  }
+}
+
 
 /*********************************************** Serial Port Event Function *********************************************************/
 
@@ -366,8 +518,8 @@ void pc_processData(char rxch)
         // Assigning the values for the graph buffers
         
         textSize(24);
-        lbl_rtor.setText(""+rtor_value);
-        lbl_hr.setText(hr+"");
+        lblRTOR.setText("R-R I:"+rtor_value);
+        //lbl_hr.setText(hr+"");
         
         ecgdata[arrayIndex] = (float)ecg;
         
@@ -438,17 +590,3 @@ public int pc_AssembleBytes(char DataRcvPacket[], int n)
 //  That includes : Font Size, Visibility, Enable/Disable, ColorScheme, etc.,
 //
 //////////////////////////////////////////////////////////////////////////////
-
-public void customGUI() 
-{  
-  comList = port.list();
-  String comList1[] = new String[comList.length+1];
-  comList1[0] = "SELECT THE PORT";
-  for (int i = 1; i <= comList.length; i++)
-  {
-    comList1[i] = comList[i-1];
-  }
-  comList = comList1;
-  portList.setItems(comList1, 0);
-  //done.setVisible(false);
-}
