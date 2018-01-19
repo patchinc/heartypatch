@@ -45,8 +45,20 @@ You can open the IDF monitor to see the debug messages by using the command:
 
 `make monitor`
 
+If all goes well and the HeartyPatch gets connected to your specified Wi-Fi network, you should see something like the following:
+
 ![idf-monitor](images/idf-monitor-tcp-connection.png)
 
-Once the heartypatch is connected with the wifi, open the gui from the project folder and you should be able see the ECG stream.  
+You can download the TCP client GUI for your platform from this link:
+
+[Download TCP Client GUI](https://github.com/Protocentral/protocentral_heartypatch/releases/latest)
+
+After you unzip and run the executable program on your computer, choose the default address (heartypatch.local) and click connect. You should see a screen like this:
+
+![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
+
+Congratulations !
+
+If something doesn't work, please email us your problem at [support@protocentral.com](mailto:support@protocentral.com)
 
 More information about this process and the ESP32 framework is available in the [ESP32 Get Started Guide](http://esp-idf.readthedocs.io/en/latest/get-started/).
