@@ -1,4 +1,4 @@
-# Compiling HeartyPatch Firmware
+## Getting live ECG data from HeartyPatch over WiFi/TCP
 
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
  for development. You will need to install and configure the following components to setup a development environment:
@@ -19,44 +19,7 @@ You can then clone our [Github repository](https://github.com/Protocentral/proto
 
 Download this zip file, rename it to whatever you want to. Change to this directory and then start building.
 
-The folder "heartypatch-ble" in the "Firmware" contains the  code of preloaded firmware on the heartypatch board, which calculates RR interval, heart rate and time domain parameters for hrv analysis and sends them through BLE.
-
-Now that you have the code and ready to build, you will need to configure the build options for heartypatch through menuconfig utility:
-
-* Open the terminal and navigate to the folder which contains the heartypatch code 	
-* Start the project configuration utility **menuconfig**     		
-`make menuconfig`
-
-![menuconfig](images/makemenuconfig.png)
-
-* Configure your serial port under *Serial flasher config -> Default serial port*
-![port](images/serialport.png)
-
-* Use the *Heartypatch configuration* to enable ble mode.
-![heartypatch-config](images/heartypatch-config-ble.png)
-
-BLE mode at this time does not support ECG stream since max30003 sensor is configured for rtor detectoin. By enabling the wifi, you may get hr and rr values through TCP in the heartypatch GUI. For ECG strem you may use the heartypatch-stream-tcp code [protocentral-heartypatch/firmware/heatypatch-stream-tcp]
-
-* Navigate to component config -> esp32-specific ->main XTAL frequency and select 26 Mhz as the board crystal
-![xtal](images/main-xtal-frequency.png)
-
-* save the configuration by selecting `<save>` and close menuconfig
-
-Run the makefile (assuming previous steps are done correctly):
-
-`make` or `make -j5`
-
-To flash the firmware on to the board, just use:
-
-`make flash`
-
-If the flashing is successful, you should see something similar to the below screen:
-
-![ESP Success](images/esp-flash-success.png)
-
-**ECG STREAMING**
-
-The folder `heartypatch-stream-tcp` contains the code for streaming ECG. 
+The folder `heatypatch-stream-tcp` contains the code for streaming ECG.
 
 Before flashing this code, enable wifi, TCP and mdns through `makemenuconfig` similar to the process described in the previous section.
 

@@ -6,17 +6,9 @@ If you don't already have one, you can buy one on [Crowd Supply](https://www.cro
 
 # Getting Started with HeartyPatch
 
-If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working.
-
-With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval measurement and send it over BLE through a standard [Heart-rate BLE service](https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml), as well as a separate custom HRV service that will provide parameters used for HRV analysis such as SD, Mean RR, PNN50 and SDNN.
+If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working. The pre-loaded firmware send HRV values over BLE.
 
 **HeartyPatch can be used with any Android app that supports the heart-rate profile.**
-
-### Parts of the HeartyPatch
-
-![HeartyPatch Parts](images/heartypatch-parts.png)
-
-<iframe src="https://player.vimeo.com/video/249182147" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
 ## The HeartyPatch App for Android - BETA
 
@@ -27,6 +19,28 @@ You can download and install the app from the [Google Play Store](https://play.g
 [![HeartyPatch App for Android](images/google-play-badge.png)](https://play.google.com/store/apps/details?id=com.protocentral.heartypatch)
 
 *Note: The android app for HeartyPatch is still in BETA and there might be some instability as a result.*
+
+## Modes of operation
+
+### Bluetooth LE Mode
+With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval measurement and send it over BLE through a standard [Heart-rate BLE service](https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml), as well as a separate custom HRV service that will provide parameters used for HRV analysis such as SD, Mean RR, PNN50 and SDNN.
+
+### Continuous ECG Streaming mode over WiFi/TCP
+
+The HeartyPatch can also do live ECG streaming from the chest. This works similar to a heart-rate monitor. Below is a screen capture of the device working in ECG mode. The data is sent over a TCP socket over WiFi.
+
+![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
+
+**To get the WiFi mode turned on, you will have to flash the firmware onto the device. The following link provides detailed step-by-step instructions about how to reprogram the HeartyPatch.**
+
+### [Programming HeartyPatch for ECG streaming over WiFi/TCP](streaming-ecg-tcp-mode.md)
+
+### Parts of the HeartyPatch
+
+![HeartyPatch Parts](images/heartypatch-parts.png)
+
+<iframe src="https://player.vimeo.com/video/249182147" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+
 
 # Updating the firmware
 
