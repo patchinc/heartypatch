@@ -3,13 +3,13 @@
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
  for development. You will need to install and configure the following components to setup a development environment:
 
-* The Xtensa ESP32 toolchain
-* The v2.1 release of esp-idf
+* The Xtensa ESP32 toolchain (*Plase make sure download the toolchain from the links at: http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain*)
+* The v2.1 release of esp-idf (*this is the most stable release with the required features*)
 * Supporting software such as Python and pyserial
 
 **Please make sure all of the above tools are properly installed before proceeding.**
 
-Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/latest/get-started/index.html).
+Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/v2.1/get-started/index.html).
 
 You can then clone our [Github repository](https://github.com/Protocentral/protocentral_heartypatch) of code for the ESP32:
 
@@ -56,7 +56,7 @@ If the flashing is successful, you should see something similar to the below scr
 
 **ECG STREAMING**
 
-The folder `heartypatch-stream-tcp` contains the code for streaming ECG. 
+The folder `heartypatch-stream-tcp` contains the code for streaming ECG.
 
 Before flashing this code, enable wifi, TCP and mdns through `makemenuconfig` similar to the process described in the previous section.
 
