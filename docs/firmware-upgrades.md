@@ -9,6 +9,8 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
 
 **Please make sure all of the above tools are properly installed before proceeding.**
 
+**The current version of the HeartyPatch code compiles well and performs well only with v2.1 of the ESP-IDF and version 1.22.0-61-gab8375a-5.2.0 of the Xtensa toolchain.**
+
 Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/v2.1/get-started/index.html).
 
 You can then clone our [Github repository](https://github.com/Protocentral/protocentral_heartypatch) of code for the ESP32:
