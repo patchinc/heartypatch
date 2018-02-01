@@ -3,7 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := aws_iot_subpub
+PROJECT_NAME := heartypatch_tcp
 
 include $(IDF_PATH)/make/project.mk
-

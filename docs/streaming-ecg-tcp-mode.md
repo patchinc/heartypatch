@@ -3,11 +3,13 @@
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
  for development. You will need to install and configure the following components to setup a development environment:
 
-* The Xtensa ESP32 toolchain
-* The v2.1 release of esp-idf
-* Supporting software such as Python and pyserial
+ * The Xtensa ESP32 toolchain (*Plase make sure download the toolchain from the links at: http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain*)
+ * The v2.1 release of esp-idf (*this is the most stable release with the required features*)
+ * Supporting software such as Python and pyserial
 
 **Please make sure all of the above tools are properly installed before proceeding.**
+
+**The current version of the HeartyPatch code compiles well and performs well only with v2.1 of the ESP-IDF and version 1.22.0-61-gab8375a-5.2.0 of the Xtensa toolchain.**
 
 Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/latest/get-started/index.html).
 
