@@ -195,9 +195,9 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 
     MAX30003_Reg_Write(MNGR_INT, 0x000004);
     vTaskDelay(100 / portTICK_PERIOD_MS);
-	
+
 	MAX30003_Reg_Write(EN_INT,0x000400);
-    vTaskDelay(100 / portTICK_PERIOD_MS);	
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
 
@@ -212,13 +212,13 @@ uint8_t* max30003_read_send_data(void)
     {
       max30003_reg_read(ECG_FIFO);
 
-      unsigned long data0 = (unsigned long) (SPI_temp_32b[1]);
+      unsigned long data0 = (unsigned long) (SPI_temp_32b[0]);
       data0 = data0 <<24;
-      unsigned long data1 = (unsigned long) (SPI_temp_32b[2]);
+      unsigned long data1 = (unsigned long) (SPI_temp_32b[1]);
       data1 = data1 <<16;
-      unsigned long data2 = (unsigned long) (SPI_temp_32b[3]);
-      data2 = data2 >>6;
-      data2 = data2 & 0x03;
+      unsigned long data2 = (unsigned long) (SPI_temp_32b[2]);
+      data2 = data2 & 0xc0;
+      data2 = data2 << 8;
 
       data = (unsigned long) (data0 | data1 | data2);
       ecgdata = (signed long) (data);

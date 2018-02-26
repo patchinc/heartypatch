@@ -59,7 +59,7 @@ static void send_data(void *pvParameters)
     db=databuff;
     vTaskDelay(100/portTICK_RATE_MS);
     ESP_LOGI(TAG, "start sending...");
-  
+
 	while(1)
     {
         db = max30003_read_send_data();

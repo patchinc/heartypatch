@@ -506,7 +506,7 @@ void pc_processData(char rxch)
         ces_pkt_hr_bytes[3] = CES_Pkt_Data_Counter[11];
 
         int data1 = pc_AssembleBytes(ces_pkt_ecg_bytes, ces_pkt_ecg_bytes.length-1);
-        ecg = (double) data1/(Math.pow(10, 3));
+        ecg = (double) data1/64;
         println(ecg);
         
         int data2 = pc_AssembleBytes(ces_pkt_rtor_bytes, ces_pkt_rtor_bytes.length-1);
