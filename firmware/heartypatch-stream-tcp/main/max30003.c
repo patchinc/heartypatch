@@ -14,6 +14,8 @@
 #include "driver/uart.h"
 
 #include "max30003.h"
+#include "esp_log.h"
+#define TAG "heartypatch:"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -144,6 +146,11 @@ void max30003_synch(void)
     MAX30003_Reg_Write(SYNCH,0x000000);
 }
 
+void max30003_fifo_reset(void)
+{
+    MAX30003_Reg_Write(FIFO_RST,0x000000);
+}
+
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 {
 
@@ -187,7 +194,28 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     MAX30003_Reg_Write(CNFG_EMUX,0x0B0000);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(CNFG_ECG, 0x005000);  // d23 - d22 : 10 for 250sps , 00:500 sps
+    unsigned long ecg_config = 0x001000;    // was 0x005000
+#ifdef CONFIG_SPS_128
+    ecg_config = ecg_config | 0x800000;   //  d[23:22] -- RATE[0:1]: 10 for 128sps
+        ESP_LOGI(TAG, "max30003_initchip setting SPS to 128");
+#endif
+#ifdef CONFIG_SPS_256
+    ecg_config = ecg_config | 0x400000;   //  d[23:22] -- RATE[0:1]: 01 for 256 sps
+    ESP_LOGI(TAG, "max30003_initchip setting SPS to 256");
+#endif
+#ifdef CONFIG_SPS_512
+    //ecg_config = ecg_config | 0x000000;   //  d[23:22] -- RATE[0:1]: 00 for 512sps
+    ESP_LOGI(TAG, "max30003_initchip setting SPS to 512");
+#endif
+
+#ifdef CONFIG_DHPF_ENABLE
+    ecg_config = ecg_config | 0x004000;   //  d[14] = enable 0.5Hz filter
+    ESP_LOGI(TAG, "max30003_initchip DHPF Enabled");
+#else
+    ESP_LOGI(TAG, "max30003_initchip DHPF Disabled");
+#endif
+
+    MAX30003_Reg_Write(CNFG_ECG, ecg_config);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
@@ -200,7 +228,6 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
-
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
 }
@@ -208,7 +235,19 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 uint8_t* max30003_read_send_data(void)
 {
     max30003_reg_read(STATUS);
+    uint8_t status_bits = (SPI_temp_32b[0] >> 4) & 0xF;
 
+    if ((status_bits & 0x4) == 0x4) {
+        // Reset EOVF condition
+        ESP_LOGI(TAG, "FIFO Reset");
+        max30003_fifo_reset();
+        return NULL;
+    }
+
+    if ((status_bits & 0x8) == 0) {
+        // No data present in FIFO
+        return NULL;
+    }
     {
       max30003_reg_read(ECG_FIFO);
 
