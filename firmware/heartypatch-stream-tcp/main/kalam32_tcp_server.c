@@ -64,8 +64,8 @@ static void send_data(void *pvParameters)
     {
         db = max30003_read_send_data();
   	     //send function
-
-      	send(connect_socket, db, 19, 0);
+      	if (db != NULL)
+      	    send(connect_socket, db, 19, 0);
         vTaskDelay(2/portTICK_RATE_MS);
     }
 }
