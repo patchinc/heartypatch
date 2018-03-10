@@ -130,7 +130,6 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
     SPI_temp_32b[0] = SPI_RX_Buff[1];
     SPI_temp_32b[1] = SPI_RX_Buff[2];
     SPI_temp_32b[2] = SPI_RX_Buff[3];
-
 }
 
 void max30003_sw_reset(void)
@@ -190,7 +189,11 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     MAX30003_Reg_Write(CNFG_ECG, 0x005000);  // d23 - d22 : 10 for 250sps , 00:500 sps
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
+    //MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
+    MAX30003_Reg_Write(CNFG_RTOR1,0x3ff600);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+
+    MAX30003_Reg_Write(CNFG_RTOR2,0x200000);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(MNGR_INT, 0x000004);

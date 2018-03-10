@@ -74,12 +74,12 @@ int CES_Pkt_Len;                                             // To store the Pac
 int CES_Pkt_Pos_Counter, CES_Data_Counter;                   // Packet and data counter
 int CES_Pkt_PktType;                                         // To store the Packet Type
 
-char CES_Pkt_Data_Counter[] = new char[8000];                // Buffer to store the data from the packet
+char CES_Pkt_Data_Counter[] = new char[35000];                // Buffer to store the data from the packet
 char ces_pkt_ecg_bytes[] = new char[4];                    // Buffer to hold ECG data
 char ces_pkt_rtor_bytes[] = new char[4];                   // Respiration Buffer
 char ces_pkt_hr_bytes[] = new char[4];                // Buffer for SpO2 IR
 
-int pSize = 1500;                                            // Total Size of the buffer
+int pSize = 24000;                                            // Total Size of the buffer
 int tcgpSize=60;
 
 int arrayIndex = 0;                                          // Increment Variable for the buffer
@@ -170,6 +170,7 @@ public void setup()
   plotECG.setLineColor(color(0, 255, 0));
   plotECG.setLineWidth(3);
   plotECG.setMar(0,0,0,0);
+  plotECG.setYLim(0, 512);
   
   plotTCG = new GPlot(this);
   plotTCG.setPos(0,(130+(totalPlotsHeight*0.3)));
@@ -275,12 +276,12 @@ public void draw()
     {    
       pointsECG.add(i,ecgdata[i]);
     }
-    
+    /*
     for(int i=0; i<nPointsTCG;i++)
     {    
       pointsTCG.add(i,rtorArray[i]);
       pointsPoincare.add(rtorArray[i],rtorArray[i+1]);
-    }
+    }*/
   } 
 
   plotECG.setPoints(pointsECG);
@@ -541,7 +542,16 @@ void pc_processData(char rxch)
       if (rxch==CES_CMDIF_PKT_STOP)
       { 
         //println("akw Pkt Recd"+CES_Pkt_Len);
+        for(int i=0;i<CES_Pkt_Len;i++)
+        {
+          ecgdata[arrayIndex++]=CES_Pkt_Data_Counter[i];
+        }
         
+        if (arrayIndex >= 15000)
+        {  
+          arrayIndex = 0;
+        }     
+        /*
         ces_pkt_ecg_bytes[0] = CES_Pkt_Data_Counter[0];
         ces_pkt_ecg_bytes[1] = CES_Pkt_Data_Counter[1];
         ces_pkt_ecg_bytes[2] = CES_Pkt_Data_Counter[2];
@@ -598,7 +608,7 @@ void pc_processData(char rxch)
         }       
 
         // If record button is clicked, then logging is done
-
+        */
         if (logging == true)
         {
           try {
