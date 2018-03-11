@@ -15,7 +15,20 @@
 
 #include "max30003.h"
 #include "esp_log.h"
+
+#define INCLUDE_STATS 1
 #define TAG "heartypatch:"
+//#define SAMPLES_PER_PACKET 3
+//#define SAMPLES_PER_PACKET_LSB ((SAMPLES_PER_PACKET*4) &0xFF)
+//#define SAMPLES_PER_PACKET_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
+#define SAMPLES_PER_PACKET 1
+#define SAMPLES_PER_PACKET_LSB 0x0C
+#define SAMPLES_PER_PACKET_MSB 0
+
+#define PROTOCOL_VERSION 0x02
+#define PACKET_SOF1 0x0A
+#define PACKET_SOF2 0xFA
+#define PACKET_EOF 0x0b
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -24,8 +37,11 @@ uint8_t DataPacketHeader[20];
 signed long ecgdata;
 unsigned long data;
 char SPI_temp_32b[4];
-
 spi_device_handle_t spi;
+
+int tally_etag[8];
+int tally_reset = 0;
+int read_count = 0;
 
 //This function is called (in irq context!) just before a transmission starts.
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
@@ -149,7 +165,28 @@ void max30003_synch(void)
 void max30003_fifo_reset(void)
 {
     MAX30003_Reg_Write(FIFO_RST,0x000000);
+    tally_reset++;
 }
+
+void init_counters() {
+    int i;
+    for (i=0; i < 8; i++)
+        tally_etag[i] = 0;
+
+    tally_reset = 0;
+}
+
+void print_counters() {
+    int i;
+    ESP_LOGI(TAG, "\n");
+    ESP_LOGI(TAG, "Tally for Reset: %d", tally_reset);
+    ESP_LOGI(TAG, "Tally for ETag");
+    for (i=0; i < 8; i++)
+        ESP_LOGI(TAG, "ETag: %x count %d", i, tally_etag[i]);
+    ESP_LOGI(TAG, "\n");
+}
+
+
 
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 {
@@ -230,6 +267,7 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_synch();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+    init_counters();
 }
 
 uint8_t* max30003_read_send_data(void)
@@ -248,6 +286,12 @@ uint8_t* max30003_read_send_data(void)
         // No data present in FIFO
         return NULL;
     }
+
+    if (read_count > 1000) {
+        print_counters();
+        read_count = 0;
+    }
+
     {
       max30003_reg_read(ECG_FIFO);
 
@@ -261,6 +305,9 @@ uint8_t* max30003_read_send_data(void)
 
       data = (unsigned long) (data0 | data1 | data2);
       ecgdata = (signed long) (data);
+      unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
+      tally_etag[ecg_etag]++;
+      read_count++;
 
       max30003_reg_read(RTOR);
       unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
@@ -274,11 +321,18 @@ uint8_t* max30003_read_send_data(void)
       unsigned int HR = (unsigned int)hr;  // type cast to int
       unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-      DataPacketHeader[0] = 0x0A;
-      DataPacketHeader[1] = 0xFA;
-      DataPacketHeader[2] = 0x0C;
-      DataPacketHeader[3] = 0;
-      DataPacketHeader[4] = 0x02;
+      //DataPacketHeader[2] = 0x0C;
+      //DataPacketHeader[3] = 0;
+
+
+    DataPacketHeader[0] = PACKET_SOF1;
+    DataPacketHeader[1] = PACKET_SOF2;
+    //DataPacketHeader[2] = (SAMPLES_PER_PACKET*4) &0xFF;        // packetsize LSB was 0x0C
+    //DataPacketHeader[3] = ((SAMPLES_PER_PACKET*4) >> 8) &0xFF;  // packetsize MSB was 0
+    DataPacketHeader[2] = SAMPLES_PER_PACKET_LSB;
+    DataPacketHeader[3] = SAMPLES_PER_PACKET_MSB;
+
+    DataPacketHeader[4] = PROTOCOL_VERSION;
 
       DataPacketHeader[5] = ecgdata;
       DataPacketHeader[6] = ecgdata>>8;
@@ -296,7 +350,7 @@ uint8_t* max30003_read_send_data(void)
       DataPacketHeader[16] = 0x00;
 
       DataPacketHeader[17] = 0x00;
-      DataPacketHeader[18] = 0x0b;
+      DataPacketHeader[18] = PACKET_EOF;
     }
 	return DataPacketHeader;
 }
