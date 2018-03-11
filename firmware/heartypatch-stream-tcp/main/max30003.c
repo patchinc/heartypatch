@@ -19,12 +19,9 @@
 #define INCLUDE_STATS 1
 #define STATS_INTERVAL 1000
 #define TAG "heartypatch:"
-//#define SAMPLES_PER_PACKET 3
-//#define SAMPLES_PER_PACKET_LSB ((SAMPLES_PER_PACKET*4) &0xFF)
-//#define PAYLOAD_SIZE_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
-#define SAMPLES_PER_PACKET 1
-#define PAYLOAD_SIZE_LSB 0x0C
-#define PAYLOAD_SIZE_MSB 0
+#define SAMPLES_PER_PACKET 3
+#define PAYLOAD_SIZE_LSB ((SAMPLES_PER_PACKET*4) &0xFF)
+#define PAYLOAD_SIZE_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
 
 #define PROTOCOL_VERSION 0x02
 #define PACKET_SOF1 0x0A
@@ -259,7 +256,8 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(MNGR_INT, 0x000004);
+    unsigned mngr_int = 0x4 | (SAMPLES_PER_PACKET - 1) << 19;
+    MAX30003_Reg_Write(MNGR_INT, mngr_int);   // FIFO=3
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
 	MAX30003_Reg_Write(EN_INT,0x000400);
@@ -358,7 +356,7 @@ uint8_t* max30003_read_send_data(void)
         max30003_read_ecg_data(5+4*i);
     }
     // Fetch RR interval data
-    max30003_read_rtor_data(9);
+    //max30003_read_rtor_data(9);
 
     DataPacketHeader[17] = 0x00;
     DataPacketHeader[18] = PACKET_EOF;
