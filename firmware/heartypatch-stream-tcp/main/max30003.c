@@ -17,13 +17,14 @@
 #include "esp_log.h"
 
 #define INCLUDE_STATS 1
+#define STATS_INTERVAL 1000
 #define TAG "heartypatch:"
 //#define SAMPLES_PER_PACKET 3
 //#define SAMPLES_PER_PACKET_LSB ((SAMPLES_PER_PACKET*4) &0xFF)
-//#define SAMPLES_PER_PACKET_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
+//#define PAYLOAD_SIZE_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
 #define SAMPLES_PER_PACKET 1
-#define SAMPLES_PER_PACKET_LSB 0x0C
-#define SAMPLES_PER_PACKET_MSB 0
+#define PAYLOAD_SIZE_LSB 0x0C
+#define PAYLOAD_SIZE_MSB 0
 
 #define PROTOCOL_VERSION 0x02
 #define PACKET_SOF1 0x0A
@@ -270,6 +271,57 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     init_counters();
 }
 
+
+
+void max30003_read_ecg_data(int ptr)
+{
+      max30003_reg_read(ECG_FIFO);
+
+      unsigned long data0 = (unsigned long) (SPI_temp_32b[0]);
+      data0 = data0 <<24;
+      unsigned long data1 = (unsigned long) (SPI_temp_32b[1]);
+      data1 = data1 <<16;
+      unsigned long data2 = (unsigned long) (SPI_temp_32b[2]);
+      data2 = data2 & 0xc0;
+      data2 = data2 << 8;
+      data = (unsigned long) (data0 | data1 | data2);
+      ecgdata = (signed long) (data);
+
+      DataPacketHeader[ptr] = ecgdata;
+      DataPacketHeader[ptr+1] = ecgdata>>8;
+      DataPacketHeader[ptr+2] = ecgdata>>16;
+      DataPacketHeader[ptr+3] = ecgdata>>24;
+
+      unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
+      tally_etag[ecg_etag]++;
+      read_count++;
+}
+
+
+
+void max30003_read_rtor_data(int ptr)
+{
+      max30003_reg_read(RTOR);
+      unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
+      unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
+      unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
+      rtor = ((rtor >>2) & 0x3fff) ;
+      float hr =  60 /((float)rtor*0.008);
+
+      unsigned int HR = (unsigned int)hr;  // type cast to int
+      unsigned int RR = (unsigned int)rtor*8 ;  //8ms
+
+      DataPacketHeader[ptr] = RR;
+      DataPacketHeader[ptr+1] = RR>>8;
+      DataPacketHeader[ptr+2] = 0x00;
+      DataPacketHeader[ptr+3] = 0x00;
+
+      DataPacketHeader[ptr+4] = HR;
+      DataPacketHeader[ptr+5] = HR>>8;
+      DataPacketHeader[ptr+6] = 0x00;
+      DataPacketHeader[ptr+7] = 0x00;
+}
+
 uint8_t* max30003_read_send_data(void)
 {
     max30003_reg_read(STATUS);
@@ -287,70 +339,29 @@ uint8_t* max30003_read_send_data(void)
         return NULL;
     }
 
-    if (read_count > 1000) {
+#if INCLUDE_STATS
+    if (read_count > STATS_INTERVAL) {
         print_counters();
         read_count = 0;
     }
-
-    {
-      max30003_reg_read(ECG_FIFO);
-
-      unsigned long data0 = (unsigned long) (SPI_temp_32b[0]);
-      data0 = data0 <<24;
-      unsigned long data1 = (unsigned long) (SPI_temp_32b[1]);
-      data1 = data1 <<16;
-      unsigned long data2 = (unsigned long) (SPI_temp_32b[2]);
-      data2 = data2 & 0xc0;
-      data2 = data2 << 8;
-
-      data = (unsigned long) (data0 | data1 | data2);
-      ecgdata = (signed long) (data);
-      unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
-      tally_etag[ecg_etag]++;
-      read_count++;
-
-      max30003_reg_read(RTOR);
-      unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
-      unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
-
-      unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
-      rtor = ((rtor >>2) & 0x3fff) ;
-
-      float hr =  60 /((float)rtor*0.008);
-
-      unsigned int HR = (unsigned int)hr;  // type cast to int
-      unsigned int RR = (unsigned int)rtor*8 ;  //8ms
-
-      //DataPacketHeader[2] = 0x0C;
-      //DataPacketHeader[3] = 0;
-
+#endif
 
     DataPacketHeader[0] = PACKET_SOF1;
     DataPacketHeader[1] = PACKET_SOF2;
-    //DataPacketHeader[2] = (SAMPLES_PER_PACKET*4) &0xFF;        // packetsize LSB was 0x0C
-    //DataPacketHeader[3] = ((SAMPLES_PER_PACKET*4) >> 8) &0xFF;  // packetsize MSB was 0
-    DataPacketHeader[2] = SAMPLES_PER_PACKET_LSB;
-    DataPacketHeader[3] = SAMPLES_PER_PACKET_MSB;
-
+    DataPacketHeader[2] = PAYLOAD_SIZE_LSB;
+    DataPacketHeader[3] = PAYLOAD_SIZE_MSB;
     DataPacketHeader[4] = PROTOCOL_VERSION;
 
-      DataPacketHeader[5] = ecgdata;
-      DataPacketHeader[6] = ecgdata>>8;
-      DataPacketHeader[7] = ecgdata>>16;
-      DataPacketHeader[8] = ecgdata>>24;
-
-      DataPacketHeader[9] =  RR ;
-      DataPacketHeader[10] = RR >>8;
-      DataPacketHeader[11] = 0x00;
-      DataPacketHeader[12] = 0x00;
-
-      DataPacketHeader[13] = HR ;
-      DataPacketHeader[14] = HR >>8;
-      DataPacketHeader[15] = 0x00;
-      DataPacketHeader[16] = 0x00;
-
-      DataPacketHeader[17] = 0x00;
-      DataPacketHeader[18] = PACKET_EOF;
+    // Fetch ECG data
+    int i;
+    for (i=0; i <SAMPLES_PER_PACKET; i++) {
+        max30003_read_ecg_data(5+4*i);
     }
+    // Fetch RR interval data
+    max30003_read_rtor_data(9);
+
+    DataPacketHeader[17] = 0x00;
+    DataPacketHeader[18] = PACKET_EOF;
+
 	return DataPacketHeader;
 }
