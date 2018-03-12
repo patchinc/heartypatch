@@ -169,19 +169,22 @@ void max30003_fifo_reset(void)
 }
 
 
-void init_counters() {
+void MAX30003_init_sequence() {
     int i;
+    max30003_fifo_reset();
     for (i=0; i < 8; i++)
         tally_etag[i] = 0;
 
     tally_reset = 0;
+    read_count = 0;
+    packet_sequence_id = 0;
 }
 
 
 void print_counters() {
     int i;
     ESP_LOGI(TAG, "\n");
-    ESP_LOGI(TAG, "Tally for Reset: %d", tally_reset);
+    ESP_LOGI(TAG, "Tally for FIFO Reset: %d", tally_reset);
     ESP_LOGI(TAG, "Tally for ETag");
     for (i=0; i < 8; i++)
         ESP_LOGI(TAG, "ETag: %x count %d", i, tally_etag[i]);
@@ -191,7 +194,6 @@ void print_counters() {
 
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 {
-
     esp_err_t ret;
 
     spi_bus_config_t buscfg=
@@ -271,8 +273,7 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_synch();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    packet_sequence_id = 0;
-    init_counters();
+    MAX30003_init_sequence();
 }
 
 

@@ -174,6 +174,7 @@ esp_err_t create_tcp_server()
 	      return ESP_FAIL;
     }
     /*connection established，now can send/recv*/
+    MAX30003_init_sequence();
     ESP_LOGI(TAG, "tcp connection established!");
     return ESP_OK;
 }

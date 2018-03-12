@@ -28,6 +28,7 @@
 
 void max30003_start_timer(void);
 void MAX30003_ReadID(void);
+void MAX30003_init_sequence(void);
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs );
 uint8_t* max30003_read_send_data(void );
 
