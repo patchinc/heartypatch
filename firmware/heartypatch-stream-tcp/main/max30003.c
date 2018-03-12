@@ -35,7 +35,7 @@ spi_device_handle_t spi;
 // counters
 int tally_etag[8];      // histogram of etag values
 int tally_reset = 0;    // ECG FIFO resets since start of current connection
-int read_count = 0;     // read count for reporting purposes, reset after status output
+int stats_read_count = 0;     // read count for reporting purposes, reset after status output
 
 
 unsigned int packet_sequence_id = 0;  // packet sequence ID.  Set to 0 at start and after each FIFO reset
@@ -181,7 +181,7 @@ void MAX30003_init_sequence() {
         tally_etag[i] = 0;
 
     tally_reset = 0;
-    read_count = 0;
+    stats_read_count = 0;
     packet_sequence_id = 0;
 }
 
@@ -303,7 +303,7 @@ int max30003_read_ecg_data(int ptr)
 
       unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
       tally_etag[ecg_etag]++;
-      read_count++;
+      stats_read_count++;
 
       return SAMPLE_SIZE;
 }
@@ -388,9 +388,9 @@ uint8_t* max30003_read_send_data(void)
     }
 
 #if CONFIG_MAX30003_STATS_ENABLE
-    if (read_count > STATS_INTERVAL) {
+    if (stats_read_count > STATS_INTERVAL) {
         print_counters();
-        read_count = 0;
+        stats_read_count = 0;
     }
 #endif
 
