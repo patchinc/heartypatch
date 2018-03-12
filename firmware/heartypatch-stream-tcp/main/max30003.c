@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "esp_system.h"
@@ -15,22 +16,15 @@
 
 #include "max30003.h"
 #include "esp_log.h"
+#include "packet_format.h"
 
 #define INCLUDE_STATS 1
 #define STATS_INTERVAL 1000
 #define TAG "heartypatch:"
-#define SAMPLES_PER_PACKET 3
-#define PAYLOAD_SIZE_LSB ((SAMPLES_PER_PACKET*4) &0xFF)
-#define PAYLOAD_SIZE_MSB (((SAMPLES_PER_PACKET*4) >> 8) &0xFF)
-
-#define PROTOCOL_VERSION 0x02
-#define PACKET_SOF1 0x0A
-#define PACKET_SOF2 0xFA
-#define PACKET_EOF 0x0b
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
-uint8_t DataPacketHeader[20];
+uint8_t DataPacketHeader[OVERHEAD_SIZE+PAYLOAD_SIZE];
 
 signed long ecgdata;
 unsigned long data;
@@ -40,6 +34,8 @@ spi_device_handle_t spi;
 int tally_etag[8];
 int tally_reset = 0;
 int read_count = 0;
+unsigned int packet_sequence_id = 0;
+struct timeval timestamp;
 
 //This function is called (in irq context!) just before a transmission starts.
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
@@ -266,7 +262,16 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_synch();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+    packet_sequence_id = 0;
     init_counters();
+    int size = sizeof(packet_sequence_id);
+    ESP_LOGI(TAG, "unsigned int: %d", size);
+    size = sizeof(timestamp);
+    ESP_LOGI(TAG, "timestamp: %d", size);
+    gettimeofday(&timestamp, NULL);
+    ESP_LOGI(TAG, "sec: %ld", timestamp.tv_sec);
+    ESP_LOGI(TAG, "us: %ld", timestamp.tv_usec);
+
 }
 
 
@@ -299,25 +304,51 @@ void max30003_read_ecg_data(int ptr)
 
 void max30003_read_rtor_data(int ptr)
 {
-      max30003_reg_read(RTOR);
-      unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
-      unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
-      unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
-      rtor = ((rtor >>2) & 0x3fff) ;
-      float hr =  60 /((float)rtor*0.008);
+    max30003_reg_read(RTOR);
+    unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
+    unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
+    unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
+    rtor = ((rtor >>2) & 0x3fff) ;
+    float hr =  60 /((float)rtor*0.008);
 
-      unsigned int HR = (unsigned int)hr;  // type cast to int
-      unsigned int RR = (unsigned int)rtor*8 ;  //8ms
+    unsigned int HR = (unsigned int)hr;  // type cast to int
+    unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-      DataPacketHeader[ptr] = RR;
-      DataPacketHeader[ptr+1] = RR>>8;
-      DataPacketHeader[ptr+2] = 0x00;
-      DataPacketHeader[ptr+3] = 0x00;
+    DataPacketHeader[ptr] = RR;
+    DataPacketHeader[ptr+1] = RR>>8;
+    DataPacketHeader[ptr+2] = 0x00;
+    DataPacketHeader[ptr+3] = 0x00;
 
-      DataPacketHeader[ptr+4] = HR;
-      DataPacketHeader[ptr+5] = HR>>8;
-      DataPacketHeader[ptr+6] = 0x00;
-      DataPacketHeader[ptr+7] = 0x00;
+    DataPacketHeader[ptr+4] = HR;
+    DataPacketHeader[ptr+5] = HR>>8;
+    DataPacketHeader[ptr+6] = 0x00;
+    DataPacketHeader[ptr+7] = 0x00;
+}
+
+
+void max30003_include_packet_sequence_id(int ptr)
+{
+    DataPacketHeader[ptr] = packet_sequence_id;
+    DataPacketHeader[ptr+1] = packet_sequence_id>>8;
+    DataPacketHeader[ptr+2] = packet_sequence_id>>16;
+    DataPacketHeader[ptr+3] = packet_sequence_id>>24;
+    packet_sequence_id++;
+}
+
+
+void max30003_include_timestamp(int ptr)
+{
+    gettimeofday(&timestamp, NULL);
+
+    DataPacketHeader[ptr] = timestamp.tv_sec;
+    DataPacketHeader[ptr+1] = timestamp.tv_sec>>8;
+    DataPacketHeader[ptr+2] = timestamp.tv_sec>>16;
+    DataPacketHeader[ptr+3] = timestamp.tv_sec>>24;
+
+    DataPacketHeader[ptr+4] = timestamp.tv_usec;
+    DataPacketHeader[ptr+5] = timestamp.tv_usec>>8;
+    DataPacketHeader[ptr+6] = timestamp.tv_usec>>16;
+    DataPacketHeader[ptr+7] = timestamp.tv_usec>>24;
 }
 
 uint8_t* max30003_read_send_data(void)
@@ -329,6 +360,7 @@ uint8_t* max30003_read_send_data(void)
         // Reset EOVF condition
         ESP_LOGI(TAG, "FIFO Reset");
         max30003_fifo_reset();
+        packet_sequence_id = 0;
         return NULL;
     }
 
@@ -350,16 +382,28 @@ uint8_t* max30003_read_send_data(void)
     DataPacketHeader[3] = PAYLOAD_SIZE_MSB;
     DataPacketHeader[4] = PROTOCOL_VERSION;
 
+    int ptr = HEADER_SIZE;
+    max30003_include_packet_sequence_id(ptr);
+    ptr += SEQ_SIZE;
+
+    max30003_include_timestamp(ptr);
+    ptr += TIMESTAMP_SIZE;
+
+    /*
+    // Fetch RR interval data
+    max30003_read_rtor_data(ptr);
+    ptr += 8
+    */
+
     // Fetch ECG data
     int i;
     for (i=0; i <SAMPLES_PER_PACKET; i++) {
-        max30003_read_ecg_data(5+4*i);
+        max30003_read_ecg_data(ptr);
+        ptr += SAMPLE_SIZE;
     }
-    // Fetch RR interval data
-    //max30003_read_rtor_data(9);
 
-    DataPacketHeader[17] = 0x00;
-    DataPacketHeader[18] = PACKET_EOF;
+    DataPacketHeader[ptr] = 0xF0;   // 0x00;
+    DataPacketHeader[ptr+1] = PACKET_EOF;
 
 	return DataPacketHeader;
 }

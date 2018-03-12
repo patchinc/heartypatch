@@ -26,6 +26,7 @@
 #include "kalam32.h"
 #include "max30003.h"
 #include "kalam32_tcp_server.h"
+#include "packet_format.h"
 
 #define TAG "heartypatch:"
 
@@ -65,7 +66,7 @@ static void send_data(void *pvParameters)
         db = max30003_read_send_data();
   	     //send function
       	if (db != NULL)
-      	    send(connect_socket, db, 19, 0);
+      	    send(connect_socket, db, PACKET_SIZE, 0);
         vTaskDelay(2/portTICK_RATE_MS);
     }
 }
