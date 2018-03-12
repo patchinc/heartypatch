@@ -18,7 +18,6 @@
 #include "esp_log.h"
 #include "packet_format.h"
 
-#define INCLUDE_STATS 1
 #define STATS_INTERVAL 1000
 #define TAG "heartypatch:"
 
@@ -382,7 +381,7 @@ uint8_t* max30003_read_send_data(void)
         return NULL;
     }
 
-#if INCLUDE_STATS
+#if CONFIG_MAX30003_STATS_ENABLE
     if (read_count > STATS_INTERVAL) {
         print_counters();
         read_count = 0;
