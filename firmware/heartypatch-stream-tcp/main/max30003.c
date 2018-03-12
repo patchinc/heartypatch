@@ -18,7 +18,9 @@
 #include "esp_log.h"
 #include "packet_format.h"
 
+// STATS_INTERVAL Controls frequency of stats output in units of FIFO reads
 #define STATS_INTERVAL 1000
+
 #define TAG "heartypatch:"
 
 uint8_t SPI_TX_Buff[4];
@@ -30,11 +32,14 @@ unsigned long data;
 char SPI_temp_32b[4];
 spi_device_handle_t spi;
 
-int tally_etag[8];
-int tally_reset = 0;
-int read_count = 0;
-unsigned int packet_sequence_id = 0;
-struct timeval timestamp;
+// counters
+int tally_etag[8];      // histogram of etag values
+int tally_reset = 0;    // ECG FIFO resets since start of current connection
+int read_count = 0;     // read count for reporting purposes, reset after status output
+
+
+unsigned int packet_sequence_id = 0;  // packet sequence ID.  Set to 0 at start and after each FIFO reset
+struct timeval timestamp;             // packet timestamp (seconds and microseconds)
 
 
 //This function is called (in irq context!) just before a transmission starts.
