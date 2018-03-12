@@ -37,11 +37,13 @@ int read_count = 0;
 unsigned int packet_sequence_id = 0;
 struct timeval timestamp;
 
+
 //This function is called (in irq context!) just before a transmission starts.
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
 {
 ;
 }
+
 
 void max30003_start_timer(void)
 {
@@ -67,6 +69,7 @@ void max30003_start_timer(void)
 
     ledc_channel_config(&ledc_channel);
 }
+
 
 void MAX30003_Reg_Write (unsigned char WRITE_ADDRESS, unsigned long data)
 {
@@ -117,6 +120,7 @@ void MAX30003_ReadID(void)
    assert(ret==ESP_OK);            //Should have had no issues.
 }
 
+
 void max30003_reg_read(unsigned char WRITE_ADDRESS)
 {
     uint8_t Reg_address=WRITE_ADDRESS;
@@ -145,22 +149,26 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
 
 }
 
+
 void max30003_sw_reset(void)
 {
     MAX30003_Reg_Write(SW_RST,0x000000);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
+
 void max30003_synch(void)
 {
     MAX30003_Reg_Write(SYNCH,0x000000);
 }
+
 
 void max30003_fifo_reset(void)
 {
     MAX30003_Reg_Write(FIFO_RST,0x000000);
     tally_reset++;
 }
+
 
 void init_counters() {
     int i;
@@ -169,6 +177,7 @@ void init_counters() {
 
     tally_reset = 0;
 }
+
 
 void print_counters() {
     int i;
@@ -179,7 +188,6 @@ void print_counters() {
         ESP_LOGI(TAG, "ETag: %x count %d", i, tally_etag[i]);
     ESP_LOGI(TAG, "\n");
 }
-
 
 
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
@@ -246,6 +254,8 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     ESP_LOGI(TAG, "max30003_initchip DHPF Disabled");
 #endif
 
+
+//ecg_config = 0x001000;    // TODO: Delete me -- for debug purposes only
     MAX30003_Reg_Write(CNFG_ECG, ecg_config);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
@@ -253,7 +263,7 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     unsigned mngr_int = 0x4 | (SAMPLES_PER_PACKET - 1) << 19;
-    MAX30003_Reg_Write(MNGR_INT, mngr_int);   // FIFO=3
+    MAX30003_Reg_Write(MNGR_INT, mngr_int);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
 	MAX30003_Reg_Write(EN_INT,0x000400);
@@ -264,19 +274,10 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 
     packet_sequence_id = 0;
     init_counters();
-    int size = sizeof(packet_sequence_id);
-    ESP_LOGI(TAG, "unsigned int: %d", size);
-    size = sizeof(timestamp);
-    ESP_LOGI(TAG, "timestamp: %d", size);
-    gettimeofday(&timestamp, NULL);
-    ESP_LOGI(TAG, "sec: %ld", timestamp.tv_sec);
-    ESP_LOGI(TAG, "us: %ld", timestamp.tv_usec);
-
 }
 
 
-
-void max30003_read_ecg_data(int ptr)
+int max30003_read_ecg_data(int ptr)
 {
       max30003_reg_read(ECG_FIFO);
 
@@ -298,20 +299,18 @@ void max30003_read_ecg_data(int ptr)
       unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
       tally_etag[ecg_etag]++;
       read_count++;
+
+      return SAMPLE_SIZE;
 }
 
 
-
-void max30003_read_rtor_data(int ptr)
+int max30003_read_rtor_data(int ptr)
 {
     max30003_reg_read(RTOR);
     unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
     unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
     unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
     rtor = ((rtor >>2) & 0x3fff) ;
-    float hr =  60 /((float)rtor*0.008);
-
-    unsigned int HR = (unsigned int)hr;  // type cast to int
     unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
     DataPacketHeader[ptr] = RR;
@@ -319,24 +318,32 @@ void max30003_read_rtor_data(int ptr)
     DataPacketHeader[ptr+2] = 0x00;
     DataPacketHeader[ptr+3] = 0x00;
 
+    /*
+    float hr =  60 /((float)rtor*0.008);
+    unsigned int HR = (unsigned int)hr;  // type cast to int
     DataPacketHeader[ptr+4] = HR;
     DataPacketHeader[ptr+5] = HR>>8;
     DataPacketHeader[ptr+6] = 0x00;
     DataPacketHeader[ptr+7] = 0x00;
+    */
+
+    return RR_SIZE;
 }
 
 
-void max30003_include_packet_sequence_id(int ptr)
+int max30003_include_packet_sequence_id(int ptr)
 {
     DataPacketHeader[ptr] = packet_sequence_id;
     DataPacketHeader[ptr+1] = packet_sequence_id>>8;
     DataPacketHeader[ptr+2] = packet_sequence_id>>16;
     DataPacketHeader[ptr+3] = packet_sequence_id>>24;
     packet_sequence_id++;
+
+    return SEQ_SIZE;
 }
 
 
-void max30003_include_timestamp(int ptr)
+int max30003_include_timestamp(int ptr)
 {
     gettimeofday(&timestamp, NULL);
 
@@ -349,10 +356,16 @@ void max30003_include_timestamp(int ptr)
     DataPacketHeader[ptr+5] = timestamp.tv_usec>>8;
     DataPacketHeader[ptr+6] = timestamp.tv_usec>>16;
     DataPacketHeader[ptr+7] = timestamp.tv_usec>>24;
+
+    return TIMESTAMP_SIZE ;
 }
+
 
 uint8_t* max30003_read_send_data(void)
 {
+    int size;
+    int ptr;
+
     max30003_reg_read(STATUS);
     uint8_t status_bits = (SPI_temp_32b[0] >> 4) & 0xF;
 
@@ -381,25 +394,25 @@ uint8_t* max30003_read_send_data(void)
     DataPacketHeader[2] = PAYLOAD_SIZE_LSB;
     DataPacketHeader[3] = PAYLOAD_SIZE_MSB;
     DataPacketHeader[4] = PROTOCOL_VERSION;
+    ptr = HEADER_SIZE;
 
-    int ptr = HEADER_SIZE;
-    max30003_include_packet_sequence_id(ptr);
-    ptr += SEQ_SIZE;
+    size = max30003_include_packet_sequence_id(ptr);
+    ptr += size;
 
-    max30003_include_timestamp(ptr);
-    ptr += TIMESTAMP_SIZE;
+    size = max30003_include_timestamp(ptr);
+    ptr += size;
 
-    /*
+
     // Fetch RR interval data
-    max30003_read_rtor_data(ptr);
-    ptr += 8
-    */
+    size = max30003_read_rtor_data(ptr);
+    ptr += size;
+
 
     // Fetch ECG data
     int i;
     for (i=0; i <SAMPLES_PER_PACKET; i++) {
-        max30003_read_ecg_data(ptr);
-        ptr += SAMPLE_SIZE;
+        size = max30003_read_ecg_data(ptr);
+        ptr += size;
     }
 
     DataPacketHeader[ptr] = 0xF0;   // 0x00;
