@@ -355,7 +355,7 @@ public void makeGUI()
       .setFont(createFont("Impact",20));
       
      lblHR = cp5.addTextlabel("lblHR")
-      .setText("HR: --- bps")
+      .setText("HR: --- bpm")
       .setPosition(width-200,300)
       .setColorValue(color(255,255,255))
       .setFont(createFont("Impact",20));
@@ -390,7 +390,7 @@ public void RecordData()
       bufferedWriter = new BufferedWriter(output);
       bufferedWriter.write(date.toString()+"");
       bufferedWriter.newLine();
-      bufferedWriter.write("TimeStamp,ECG,SpO2,Respiration");
+      bufferedWriter.write("PktSeqID,PktTimeStamp,ECG,RTOR,HR");
       bufferedWriter.newLine();
     }
   }
@@ -505,7 +505,7 @@ void pc_processData(char rxch)
               try {
                 date = new Date();
                 dateFormat = new SimpleDateFormat("HH:mm:ss");
-                bufferedWriter.write(seq+","+timestamp+","+ecg+","+rtor_value+","+hr);
+                bufferedWriter.write(seq+","+String.format("%.3f", timestamp)+","+ecg+","+String.format("%.0f", rtor_value)+","+String.format("%.1f", hr));
                 bufferedWriter.newLine();
               }
               catch(IOException e) {
