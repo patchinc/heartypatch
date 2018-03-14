@@ -186,32 +186,34 @@ void tcp_conn(void *pvParameters)
 
     /*create tcp socket*/
     int socket_ret;
-
-    vTaskDelay(3000 / portTICK_RATE_MS);
-
-    ESP_LOGI(TAG, "create_tcp_server.");
-    socket_ret=create_tcp_server();
-    if(ESP_FAIL == socket_ret)
-    {
-    	ESP_LOGI(TAG, "create tcp socket error,stop.");
-    	vTaskDelete(NULL);
-    }
-
-    /*create a task to tx/rx data*/
     TaskHandle_t tx_rx_task;
-    xTaskCreate(&send_data, "send_data", 4096, NULL, 4, &tx_rx_task);
-
-    while (1)
-    {
-      	vTaskDelay(3000 / portTICK_RATE_MS);//every 3s
-  	    int err_ret = check_socket_error_code();
-  	    if (err_ret == ECONNRESET)
+    vTaskDelay(2000 / portTICK_RATE_MS);
+    while (1) {
+        ESP_LOGI(TAG, "create_tcp_server.");
+        socket_ret=create_tcp_server();
+        if(ESP_FAIL == socket_ret)
         {
-      		ESP_LOGI(TAG, "disconnected... stop.");
-          close_socket();
-          socket_ret=create_tcp_server();
-          //break;
-  	    }
+            ESP_LOGI(TAG, "create tcp socket error,stop.");
+            vTaskDelete(NULL);
+        }
+        /*create a task to tx/rx data*/
+        xTaskCreate(&send_data, "send_data", 4096, NULL, 4, &tx_rx_task);
+        int flag = true;
+        while (flag)
+        {
+            vTaskDelay(3000 / portTICK_RATE_MS);//every 3s
+            int err_ret = check_socket_error_code();
+            if (err_ret == ECONNRESET)
+            {
+                ESP_LOGI(TAG, "disconnected... stop.");
+              close_socket();
+              flag = false;
+            }
+        }
+        vTaskDelete(&tx_rx_task);
+        max30003_sw_reset();
+        ESP_LOGI(TAG, "restart");
+        flag = true;
     }
 
     close_socket();

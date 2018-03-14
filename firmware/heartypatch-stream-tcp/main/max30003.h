@@ -26,6 +26,7 @@
 
 #define PIN_NUM_FCLK      13
 
+void max30003_sw_reset(void);
 void max30003_start_timer(void);
 void MAX30003_ReadID(void);
 void MAX30003_init_sequence(void);
