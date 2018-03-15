@@ -60,6 +60,8 @@ private static final int CESState_PktLen_Found = 3;
 private static final int CES_CMDIF_PKT_START_1 = 0x0A;
 private static final int CES_CMDIF_PKT_START_2 = 0xFA;
 private static final int CES_CMDIF_PKT_STOP = 0x0B;
+private static final int CES_CMDIF_PKT_PKTTYPE = 0x03;
+private static final int ECG_SAMPLES_PER_PKT = 8;
 
 /*CES CMD IF Packet Indices*/
 private static final int CES_CMDIF_IND_LEN = 2;
@@ -75,9 +77,7 @@ int CES_Pkt_Pos_Counter, CES_Data_Counter;                   // Packet and data 
 int CES_Pkt_PktType;                                         // To store the Packet Type
 
 char CES_Pkt_Data_Counter[] = new char[1000];                // Buffer to store the data from the packet
-char ces_pkt_ecg_bytes[] = new char[4];                    // Buffer to hold ECG data
-char ces_pkt_rtor_bytes[] = new char[4];                   // Respiration Buffer
-char ces_pkt_hr_bytes[] = new char[4];                // Buffer for SpO2 IR
+char ces_pkt_temp_bytes[] = new char[4];                     // Buffer to hold data
 
 int pSize = 1500;                                            // Total Size of the buffer
 int tcgpSize=60;
@@ -88,11 +88,8 @@ int tcgArrayIndex=0;
 float time = 0;                                              // X axis increment variable
 
 // Buffer for ecg,spo2,respiration,and average of thos values
-float[] ecgdata = new float[pSize];
-float[] bpmArray = new float[pSize];
-float[] ecg_avg = new float[pSize];    
+float[] ecgdata = new float[pSize];   
 float[] rtorArray = new float[pSize];
-
 
 /************** Graph Related Variables **********************/
 
@@ -358,7 +355,7 @@ public void makeGUI()
       .setFont(createFont("Impact",20));
       
      lblHR = cp5.addTextlabel("lblHR")
-      .setText("HR: --- bps")
+      .setText("HR: --- bpm")
       .setPosition(width-200,300)
       .setColorValue(color(255,255,255))
       .setFont(createFont("Impact",20));
@@ -393,7 +390,7 @@ public void RecordData()
       bufferedWriter = new BufferedWriter(output);
       bufferedWriter.write(date.toString()+"");
       bufferedWriter.newLine();
-      bufferedWriter.write("TimeStamp,ECG,SpO2,Respiration");
+      bufferedWriter.write("PktSeqID,PktTimeStamp,ECG,RTOR,HR");
       bufferedWriter.newLine();
     }
   }
@@ -482,7 +479,7 @@ void pc_processData(char rxch)
         CES_Pkt_PktType = (int) rxch;
     } else if ( (CES_Pkt_Pos_Counter >= CES_CMDIF_PKT_OVERHEAD) && (CES_Pkt_Pos_Counter < CES_CMDIF_PKT_OVERHEAD+CES_Pkt_Len+1) )  //Read Data
     {
-      if (CES_Pkt_PktType == 2)
+      if (CES_Pkt_PktType == CES_CMDIF_PKT_PKTTYPE)
       {
         CES_Pkt_Data_Counter[CES_Data_Counter++] = (char) (rxch);          // Buffer that assigns the data separated from the packet
       }
@@ -490,38 +487,44 @@ void pc_processData(char rxch)
     {
       if (rxch==CES_CMDIF_PKT_STOP)
       { 
-        ces_pkt_ecg_bytes[0] = CES_Pkt_Data_Counter[0];
-        ces_pkt_ecg_bytes[1] = CES_Pkt_Data_Counter[1];
-        ces_pkt_ecg_bytes[2] = CES_Pkt_Data_Counter[2];
-        ces_pkt_ecg_bytes[3] = CES_Pkt_Data_Counter[3];
-
-        ces_pkt_rtor_bytes[0] = CES_Pkt_Data_Counter[4];
-        ces_pkt_rtor_bytes[1] = CES_Pkt_Data_Counter[5];
-        ces_pkt_rtor_bytes[2] = CES_Pkt_Data_Counter[6];
-        ces_pkt_rtor_bytes[3] = CES_Pkt_Data_Counter[7];
-
-        ces_pkt_hr_bytes[0] = CES_Pkt_Data_Counter[8];
-        ces_pkt_hr_bytes[1] = CES_Pkt_Data_Counter[9];
-        ces_pkt_hr_bytes[2] = CES_Pkt_Data_Counter[10];
-        ces_pkt_hr_bytes[3] = CES_Pkt_Data_Counter[11];
-
-        int data1 = pc_AssembleBytes(ces_pkt_ecg_bytes, ces_pkt_ecg_bytes.length-1);
-        ecg = (double) data1/64;
-        println(ecg);
+        long seq = bytesToUnsigned(0, 4);
+        long timestamp_sec = bytesToUnsigned(4, 4);
+        long timestamp_usec = bytesToUnsigned(8, 4);
+        float timestamp = timestamp_sec + .000001 * timestamp_usec;
         
-        int data2 = pc_AssembleBytes(ces_pkt_rtor_bytes, ces_pkt_rtor_bytes.length-1);
-        rtor_value = (double) data2; ///(Math.pow(10, 3));
+        rtor_value = (double)bytesToUnsigned(12, 4);
+        if (rtor_value != 0) 
+            hr = 60*1000.0 / rtor_value;
+        else
+            hr = 0.0;
 
-        int data3 = pc_AssembleBytes(ces_pkt_hr_bytes, ces_pkt_hr_bytes.length-1);
-        hr = (double) data3; ///(Math.pow(10, 3));
+        for (int i=0; i<ECG_SAMPLES_PER_PKT; i++) {
+            ecg = (double)bytesToInt(16+4*i, 4) /64;
+            if (logging == true)
+            {
+              try {
+                date = new Date();
+                dateFormat = new SimpleDateFormat("HH:mm:ss");
+                bufferedWriter.write(seq+","+String.format("%.3f", timestamp)+","+ecg+","+String.format("%.0f", rtor_value)+","+String.format("%.1f", hr));
+                bufferedWriter.newLine();
+              }
+              catch(IOException e) {
+                println("It broke!!!");
+                e.printStackTrace();
+              }
+            }
+            
+            // Assigning the ECG value for the graph buffer
+            ecgdata[arrayIndex++] = (float)ecg;
+            if (arrayIndex == pSize)
+                arrayIndex = 0;
+        }
         
-        // Assigning the values for the graph buffers
         
+        // Assigning the RTOR value for the graph buffer
         textSize(24);
-        lblRTOR.setText("R-R I:"+rtor_value);
-        //lbl_hr.setText(hr+"");
-        
-        ecgdata[arrayIndex] = (float)ecg;
+        lblRTOR.setText("R-R:"+String.format("%.0f", rtor_value)+" ms");
+        lblHR.setText("HR: "+String.format("%.0f", hr)+" bpm");
         
         if(rtor_value!=prev_rtor_value)
         {
@@ -531,34 +534,12 @@ void pc_processData(char rxch)
         }
         
         prev_rtor_value=rtor_value;
-
-        arrayIndex++;
         
          if (tcgArrayIndex == tcgpSize)
         {  
           tcgArrayIndex = 0;
         } 
-          
-        if (arrayIndex == pSize)
-        {  
-          arrayIndex = 0;
-        }       
-
-        // If record button is clicked, then logging is done
-
-        if (logging == true)
-        {
-          try {
-            date = new Date();
-            dateFormat = new SimpleDateFormat("HH:mm:ss");
-            bufferedWriter.write(dateFormat.format(date)+","+ecg+","+rtor_value+","+hr);
-            bufferedWriter.newLine();
-          }
-          catch(IOException e) {
-            println("It broke!!!");
-            e.printStackTrace();
-          }
-        }
+               
         ecs_rx_state=CESState_Init;
       } else
       {
@@ -572,6 +553,29 @@ void pc_processData(char rxch)
   }
 }
 
+
+/*********************************************** Functions To Convert Data *********************************************************/
+
+public int bytesToInt(int offset, int n)
+{
+  // copy data
+  for (int i=0; i<n; i++) {
+    ces_pkt_temp_bytes[i] = CES_Pkt_Data_Counter[offset+i];
+  }
+    
+   return pc_AssembleBytes(ces_pkt_temp_bytes, n-1);
+}
+
+
+public long bytesToUnsigned(int offset, int n)
+{
+  // copy data
+  for (int i=0; i<n; i++) {
+    ces_pkt_temp_bytes[i] = CES_Pkt_Data_Counter[offset+i];
+  }
+    
+   return pc_AssembleBytesUnsigned(ces_pkt_temp_bytes, n-1);
+}
 /*********************************************** Recursion Function To Reverse The data *********************************************************/
 
 public int pc_AssembleBytes(char DataRcvPacket[], int n)
@@ -580,6 +584,14 @@ public int pc_AssembleBytes(char DataRcvPacket[], int n)
     return (int) DataRcvPacket[n]<<(n*8);
   else
     return (DataRcvPacket[n]<<(n*8))| pc_AssembleBytes(DataRcvPacket, n-1);
+}
+
+public long pc_AssembleBytesUnsigned(char DataRcvPacket[], int n)
+{
+  if (n == 0)
+    return (int) DataRcvPacket[n]<<(n*8);
+  else
+    return (DataRcvPacket[n]<<(n*8))| pc_AssembleBytesUnsigned(DataRcvPacket, n-1);
 }
 
 /********************************************* User-defined Method for G4P Controls  **********************************************************/

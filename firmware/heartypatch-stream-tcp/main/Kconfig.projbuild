@@ -45,4 +45,11 @@ config MDNS_ENABLE
 	bool "Enable MDNS"
 	help
 		Enable/Disable MDNS
+
+config MAX30003_STATS_ENABLE
+	bool "Enable Stats"
+	default n
+	help
+		Enable/Disable Max30003 stats reporting to console
+
 endmenu
