@@ -1,15 +1,19 @@
 ## Getting live ECG data from HeartyPatch over WiFi/TCP
 
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
- for development. You will need to install and configure the following components to setup a development environment:
+for development. You will need to install and configure the following components to setup a development environment:
 
- * The Xtensa ESP32 toolchain (*Plase make sure download the toolchain from the links at: http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain*)
- * The v2.1 release of esp-idf (*this is the most stable release with the required features*)
- * Supporting software such as Python and pyserial
+### The Xtensa ESP32 toolchain
+(*Plase make sure download the toolchain from the links at: http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain*)
 
-**Please make sure all of the above tools are properly installed before proceeding.**
+This version of the esp-idf compiles well only with the toolchain version 1.22.0-61-gab8375a-5.2.0.
 
-**The current version of the HeartyPatch code compiles well and performs well only with v2.1 of the ESP-IDF and version 1.22.0-61-gab8375a-5.2.0 of the Xtensa toolchain.**
+### The v2.1 release of esp-idf
+*The current version of the HeartyPatch code compiles well and performs well only with v2.1 of the ESP-IDF and version 1.22.0-61-gab8375a-5.2.0 of the Xtensa toolchain.*
+
+[Download the ESP-IDF version 2.1 here](https://github.com/espressif/esp-idf/releases/download/v2.1/esp-idf-v2.1.zip)
+
+`Please make sure all of the above tools are properly installed before proceeding.`
 
 Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/latest/get-started/index.html).
 
@@ -51,7 +55,24 @@ If all goes well and the HeartyPatch gets connected to your specified Wi-Fi netw
 
 ![idf-monitor](images/idf-monitor-tcp-connection.png)
 
-You can download the TCP client GUI for your platform from this link:
+# The TCP Client GUI
+
+The HeartyPatch is now configured as a TCP sever ready for connection from a TCP client. The HeartyPatch sends data out in the following packet format.
+
+Offset | Byte Value | Description
+------ | ----------- | ------------------
+0 | 0x0A | Start of frame
+1 | 0xFA | Start of frame
+2| Payload Size LSB |
+3| Payload Size MSB |
+4| Protocol version | (currently 0x03)
+5-8| Packet sequence | incremental number
+9-16| Timestamp | From ESP32 gettimeofday()
+17-20| R-R Interval |
+18-...| ECG Data samples | Currently 8 samples / packet
+...| 0x0B | End of Frame
+
+You can download the ProtoCentral TCP client GUI for your platform from the following link.
 
 [Download TCP Client GUI](https://github.com/Protocentral/protocentral_heartypatch/releases/latest)
 
