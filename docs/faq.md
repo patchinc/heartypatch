@@ -16,4 +16,4 @@ Most of the problems in compilation arise from having the wrong versions of the 
 
 By default, the LED would not flash. This is done to conserve battery power. This can be enabled in the software though.
 
-## We will continue to add to this list based on user input, so please check this list if something goes wrong.  
+### We will continue to add to this list based on user input, so please check this list if something goes wrong.  
