@@ -4,6 +4,8 @@ HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with
 
 If you don't already have one, you can buy one on [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
 
+If you face any issue in any part of this guide or with the HeartyPatch in general, please make sure to check our [Frequently Asked Questions](faq.md). If it does not address your question, please email us at support@protocentral.com.
+
 # Getting Started with HeartyPatch
 
 If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working. The pre-loaded firmware send HRV values over BLE.
