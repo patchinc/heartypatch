@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "esp_system.h"
@@ -14,22 +15,39 @@
 #include "driver/uart.h"
 
 #include "max30003.h"
+#include "esp_log.h"
+#include "packet_format.h"
+
+// STATS_INTERVAL Controls frequency of stats output in units of FIFO reads
+#define STATS_INTERVAL 1000
+
+#define TAG "heartypatch:"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
-uint8_t DataPacketHeader[20];
+uint8_t DataPacketHeader[OVERHEAD_SIZE+PAYLOAD_SIZE];
 
 signed long ecgdata;
 unsigned long data;
 char SPI_temp_32b[4];
-
 spi_device_handle_t spi;
+
+// counters
+int tally_etag[8];      // histogram of etag values
+int tally_reset = 0;    // ECG FIFO resets since start of current connection
+int stats_read_count = 0;     // read count for reporting purposes, reset after status output
+
+
+unsigned int packet_sequence_id = 0;  // packet sequence ID.  Set to 0 at start and after each FIFO reset
+struct timeval timestamp;             // packet timestamp (seconds and microseconds)
+
 
 //This function is called (in irq context!) just before a transmission starts.
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
 {
 ;
 }
+
 
 void max30003_start_timer(void)
 {
@@ -55,6 +73,7 @@ void max30003_start_timer(void)
 
     ledc_channel_config(&ledc_channel);
 }
+
 
 void MAX30003_Reg_Write (unsigned char WRITE_ADDRESS, unsigned long data)
 {
@@ -105,6 +124,7 @@ void MAX30003_ReadID(void)
    assert(ret==ESP_OK);            //Should have had no issues.
 }
 
+
 void max30003_reg_read(unsigned char WRITE_ADDRESS)
 {
     uint8_t Reg_address=WRITE_ADDRESS;
@@ -133,20 +153,52 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
 
 }
 
+
 void max30003_sw_reset(void)
 {
     MAX30003_Reg_Write(SW_RST,0x000000);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
+
 void max30003_synch(void)
 {
     MAX30003_Reg_Write(SYNCH,0x000000);
 }
 
+
+void max30003_fifo_reset(void)
+{
+    MAX30003_Reg_Write(FIFO_RST,0x000000);
+    tally_reset++;
+}
+
+
+void MAX30003_init_sequence() {
+    int i;
+    max30003_fifo_reset();
+    for (i=0; i < 8; i++)
+        tally_etag[i] = 0;
+
+    tally_reset = 0;
+    stats_read_count = 0;
+    packet_sequence_id = 0;
+}
+
+
+void print_counters() {
+    int i;
+    ESP_LOGI(TAG, "\n");
+    ESP_LOGI(TAG, "Tally for FIFO Reset: %d", tally_reset);
+    ESP_LOGI(TAG, "Tally for ETag");
+    for (i=0; i < 8; i++)
+        ESP_LOGI(TAG, "ETag: %x count %d", i, tally_etag[i]);
+    ESP_LOGI(TAG, "\n");
+}
+
+
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 {
-
     esp_err_t ret;
 
     spi_bus_config_t buscfg=
@@ -187,29 +239,51 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     MAX30003_Reg_Write(CNFG_EMUX,0x0B0000);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(CNFG_ECG, 0x005000);  // d23 - d22 : 10 for 250sps , 00:500 sps
+    unsigned long ecg_config = 0x001000;    // was 0x005000
+#ifdef CONFIG_SPS_128
+    ecg_config = ecg_config | 0x800000;   //  d[23:22] -- RATE[0:1]: 10 for 128sps
+        ESP_LOGI(TAG, "max30003_initchip setting SPS to 128");
+#endif
+#ifdef CONFIG_SPS_256
+    ecg_config = ecg_config | 0x400000;   //  d[23:22] -- RATE[0:1]: 01 for 256 sps
+    ESP_LOGI(TAG, "max30003_initchip setting SPS to 256");
+#endif
+#ifdef CONFIG_SPS_512
+    //ecg_config = ecg_config | 0x000000;   //  d[23:22] -- RATE[0:1]: 00 for 512sps
+    ESP_LOGI(TAG, "max30003_initchip setting SPS to 512");
+#endif
+
+#ifdef CONFIG_DHPF_ENABLE
+    ecg_config = ecg_config | 0x004000;   //  d[14] = enable 0.5Hz filter
+    ESP_LOGI(TAG, "max30003_initchip DHPF Enabled");
+#else
+    ESP_LOGI(TAG, "max30003_initchip DHPF Disabled");
+#endif
+
+
+//ecg_config = 0x001000;    // TODO: Delete me -- for debug purposes only
+    MAX30003_Reg_Write(CNFG_ECG, ecg_config);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(MNGR_INT, 0x000004);
+    unsigned mngr_int = 0x4 | (SAMPLES_PER_PACKET - 1) << 19;
+    MAX30003_Reg_Write(MNGR_INT, mngr_int);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
 	MAX30003_Reg_Write(EN_INT,0x000400);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
-
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+    MAX30003_init_sequence();
 }
 
-uint8_t* max30003_read_send_data(void)
-{
-    max30003_reg_read(STATUS);
 
-    {
+int max30003_read_ecg_data(int ptr)
+{
       max30003_reg_read(ECG_FIFO);
 
       unsigned long data0 = (unsigned long) (SPI_temp_32b[0]);
@@ -219,45 +293,135 @@ uint8_t* max30003_read_send_data(void)
       unsigned long data2 = (unsigned long) (SPI_temp_32b[2]);
       data2 = data2 & 0xc0;
       data2 = data2 << 8;
-
       data = (unsigned long) (data0 | data1 | data2);
       ecgdata = (signed long) (data);
 
-      max30003_reg_read(RTOR);
-      unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
-      unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
+      DataPacketHeader[ptr] = ecgdata;
+      DataPacketHeader[ptr+1] = ecgdata>>8;
+      DataPacketHeader[ptr+2] = ecgdata>>16;
+      DataPacketHeader[ptr+3] = ecgdata>>24;
 
-      unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
-      rtor = ((rtor >>2) & 0x3fff) ;
+      unsigned char ecg_etag = (SPI_temp_32b[2] >> 3) & 0x7;
+      tally_etag[ecg_etag]++;
+      stats_read_count++;
 
-      float hr =  60 /((float)rtor*0.008);
+      return SAMPLE_SIZE;
+}
 
-      unsigned int HR = (unsigned int)hr;  // type cast to int
-      unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-      DataPacketHeader[0] = 0x0A;
-      DataPacketHeader[1] = 0xFA;
-      DataPacketHeader[2] = 0x0C;
-      DataPacketHeader[3] = 0;
-      DataPacketHeader[4] = 0x02;
+int max30003_read_rtor_data(int ptr)
+{
+    max30003_reg_read(RTOR);
+    unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
+    unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
+    unsigned long rtor = (RTOR_msb<<8 | RTOR_lsb);
+    rtor = ((rtor >>2) & 0x3fff) ;
+    unsigned int RR = (unsigned int)rtor*8 ;  //8ms
 
-      DataPacketHeader[5] = ecgdata;
-      DataPacketHeader[6] = ecgdata>>8;
-      DataPacketHeader[7] = ecgdata>>16;
-      DataPacketHeader[8] = ecgdata>>24;
+    DataPacketHeader[ptr] = RR;
+    DataPacketHeader[ptr+1] = RR>>8;
+    DataPacketHeader[ptr+2] = 0x00;
+    DataPacketHeader[ptr+3] = 0x00;
 
-      DataPacketHeader[9] =  RR ;
-      DataPacketHeader[10] = RR >>8;
-      DataPacketHeader[11] = 0x00;
-      DataPacketHeader[12] = 0x00;
+    /*
+    float hr =  60 /((float)rtor*0.008);
+    unsigned int HR = (unsigned int)hr;  // type cast to int
+    DataPacketHeader[ptr+4] = HR;
+    DataPacketHeader[ptr+5] = HR>>8;
+    DataPacketHeader[ptr+6] = 0x00;
+    DataPacketHeader[ptr+7] = 0x00;
+    */
 
-      DataPacketHeader[13] = HR ;
-      DataPacketHeader[14] = HR >>8;
-      DataPacketHeader[15] = 0x00;
-      DataPacketHeader[16] = 0x00;
+    return RR_SIZE;
+}
 
-      DataPacketHeader[17] = 0x00;
-      DataPacketHeader[18] = 0x0b;
+
+int max30003_include_packet_sequence_id(int ptr)
+{
+    DataPacketHeader[ptr] = packet_sequence_id;
+    DataPacketHeader[ptr+1] = packet_sequence_id>>8;
+    DataPacketHeader[ptr+2] = packet_sequence_id>>16;
+    DataPacketHeader[ptr+3] = packet_sequence_id>>24;
+    packet_sequence_id++;
+
+    return SEQ_SIZE;
+}
+
+
+int max30003_include_timestamp(int ptr)
+{
+    gettimeofday(&timestamp, NULL);
+
+    DataPacketHeader[ptr] = timestamp.tv_sec;
+    DataPacketHeader[ptr+1] = timestamp.tv_sec>>8;
+    DataPacketHeader[ptr+2] = timestamp.tv_sec>>16;
+    DataPacketHeader[ptr+3] = timestamp.tv_sec>>24;
+
+    DataPacketHeader[ptr+4] = timestamp.tv_usec;
+    DataPacketHeader[ptr+5] = timestamp.tv_usec>>8;
+    DataPacketHeader[ptr+6] = timestamp.tv_usec>>16;
+    DataPacketHeader[ptr+7] = timestamp.tv_usec>>24;
+
+    return TIMESTAMP_SIZE ;
+}
+
+
+uint8_t* max30003_read_send_data(void)
+{
+    int size;
+    int ptr;
+
+    max30003_reg_read(STATUS);
+    uint8_t status_bits = (SPI_temp_32b[0] >> 4) & 0xF;
+
+    if ((status_bits & 0x4) == 0x4) {
+        // Reset EOVF condition
+        ESP_LOGI(TAG, "FIFO Reset");
+        max30003_fifo_reset();
+        packet_sequence_id = 0;
+        return NULL;
     }
+
+    if ((status_bits & 0x8) == 0) {
+        // No data present in FIFO
+        return NULL;
+    }
+
+#if CONFIG_MAX30003_STATS_ENABLE
+    if (stats_read_count > STATS_INTERVAL) {
+        print_counters();
+        stats_read_count = 0;
+    }
+#endif
+
+    DataPacketHeader[0] = PACKET_SOF1;
+    DataPacketHeader[1] = PACKET_SOF2;
+    DataPacketHeader[2] = PAYLOAD_SIZE_LSB;
+    DataPacketHeader[3] = PAYLOAD_SIZE_MSB;
+    DataPacketHeader[4] = PROTOCOL_VERSION;
+    ptr = HEADER_SIZE;
+
+    size = max30003_include_packet_sequence_id(ptr);
+    ptr += size;
+
+    size = max30003_include_timestamp(ptr);
+    ptr += size;
+
+
+    // Fetch RR interval data
+    size = max30003_read_rtor_data(ptr);
+    ptr += size;
+
+
+    // Fetch ECG data
+    int i;
+    for (i=0; i <SAMPLES_PER_PACKET; i++) {
+        size = max30003_read_ecg_data(ptr);
+        ptr += size;
+    }
+
+    DataPacketHeader[ptr] = 0xF0;   // 0x00;
+    DataPacketHeader[ptr+1] = PACKET_EOF;
+
 	return DataPacketHeader;
 }
