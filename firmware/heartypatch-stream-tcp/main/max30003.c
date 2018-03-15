@@ -228,16 +228,16 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_sw_reset();
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_GEN, 0x080004);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_CAL, 0x720000);  // 0x700000
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_EMUX,0x0B0000);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     unsigned long ecg_config = 0x001000;    // was 0x005000
 #ifdef CONFIG_SPS_128
@@ -263,17 +263,17 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 
 //ecg_config = 0x001000;    // TODO: Delete me -- for debug purposes only
     MAX30003_Reg_Write(CNFG_ECG, ecg_config);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_RTOR1,0x3fc600);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     unsigned mngr_int = 0x4 | (SAMPLES_PER_PACKET - 1) << 19;
     MAX30003_Reg_Write(MNGR_INT, mngr_int);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
 	MAX30003_Reg_Write(EN_INT,0x000400);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
     vTaskDelay(100 / portTICK_PERIOD_MS);

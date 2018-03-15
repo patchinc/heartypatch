@@ -66,15 +66,18 @@ static void send_data(void *pvParameters)
 
 	while(1)
     {
-        if (kill_send_data) {
-            vTaskDelete(NULL);
-            max30003_sw_reset();     // Quiesce MAX30003
-        }
+        while(1)
+        {
+            if (kill_send_data) {
+                vTaskDelete(NULL);
+                max30003_sw_reset();     // Quiesce MAX30003
+            }
 
-        db = max30003_read_send_data();
-  	     //send function
-      	if (db != NULL)
-      	    send(connect_socket, db, PACKET_SIZE, 0);
+            db = max30003_read_send_data();
+            if (db == NULL)
+                break;
+            send(connect_socket, db, PACKET_SIZE, 0);
+        }
         vTaskDelay(2/portTICK_RATE_MS);
     }
 }
@@ -206,8 +209,7 @@ void tcp_conn(void *pvParameters)
         }
         /*create a task to tx/rx data*/
         xTaskCreate(&send_data, "send_data", 4096, NULL, 4, &tx_rx_task);
-        int flag = true;
-        while (flag)
+        while (1)
         {
             vTaskDelay(1500 / portTICK_RATE_MS);//every 3s
             int err_ret = check_socket_error_code();
@@ -215,8 +217,8 @@ void tcp_conn(void *pvParameters)
             {
               ESP_LOGI(TAG, "disconnected... stop.");
               close_socket();
-              flag = false;
               kill_send_data = true;
+              break;
             }
         }
         ESP_LOGI(TAG, "restart");
@@ -229,7 +231,7 @@ void tcp_conn(void *pvParameters)
 
 void kalam_tcp_start(void)
 {
- xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
+    xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
 }
 
 /*********************** END TCP Server Code *****************/
