@@ -79,7 +79,7 @@ int CES_Pkt_PktType;                                         // To store the Pac
 char CES_Pkt_Data_Counter[] = new char[1000];                // Buffer to store the data from the packet
 char ces_pkt_temp_bytes[] = new char[4];                     // Buffer to hold data
 
-int pSize = 1500;                                            // Total Size of the buffer
+int pSize = 512;//1500;                                            // Total Size of the buffer
 int tcgpSize=60;
 
 int arrayIndex = 0;                                          // Increment Variable for the buffer
