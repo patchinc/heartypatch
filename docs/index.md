@@ -53,26 +53,26 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
  for development. You will need to install and configure the following components to setup a development environment:
 
 * **The Xtensa ESP32 toolchain**
-  *Please make sure to download the toolchain from the* [Espressif Setup Guide for v2.1](http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain)
+  Please make sure to download the toolchain from the [Espressif Setup Guide for v2.1](http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain)
 
-This version of the esp-idf compiles well only with the toolchain version 1.22.0-61-gab8375a-5.2.0.
+  This version of the esp-idf compiles well only with the toolchain version 1.22.0-61-gab8375a-5.2.0.
 
 * **The v2.1 release of esp-idf**
   *The current version of the HeartyPatch code compiles well and performs well only with v2.1 of the ESP-IDF and version 1.22.0-61-gab8375a-5.2.0 of the Xtensa toolchain.*
 
   [Download the ESP-IDF version 2.1 here](https://github.com/espressif/esp-idf/releases/download/v2.1/esp-idf-v2.1.zip)
 
-`Please make sure all of the above tools are properly installed before proceeding.`
+  Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/v2.1/get-started/index.html).
 
-Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/v2.1/get-started/index.html).
+`Please make sure that correct version of all of the above tools are installed before proceeding.`
 
-You can then clone our [Github repository](https://github.com/Protocentral/protocentral_heartypatch) of code for the ESP32:
+* Clone our [Github repository](https://github.com/Protocentral/protocentral_heartypatch) of code for the ESP32:
 
-`git clone https://github.com/Protocentral/protocentral_heartypatch.git`
+  `git clone https://github.com/Protocentral/protocentral_heartypatch.git`
 
-[or download a zip file of the latest master branch](https://github.com/Protocentral/protocentral_heartypatch/archive/master.zip).
+  [or download a zip file of the latest master branch](https://github.com/Protocentral/protocentral_heartypatch/archive/master.zip).
 
-Download this zip file, rename it to whatever you want to. Change to this directory and then start building.
+* Download this zip file, rename it to whatever you want to. Change to this directory and then start building.
 
 The folder "heartypatch-ble" in the "Firmware" contains the  code of preloaded firmware on the heartypatch board, which calculates RR interval, heart rate and time domain parameters for hrv analysis and sends them through BLE.
 
