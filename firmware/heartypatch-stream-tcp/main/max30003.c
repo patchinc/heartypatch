@@ -227,6 +227,11 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_start_timer();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+}
+
+void max30003_configure(void)
+{
+
     max30003_sw_reset();
     //vTaskDelay(100 / portTICK_PERIOD_MS);
 

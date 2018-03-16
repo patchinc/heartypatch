@@ -64,13 +64,15 @@ static void send_data(void *pvParameters)
     ESP_LOGI(TAG, "start sending...");
     kill_send_data = false;
 
+    max30003_configure();
+
 	while(1)
     {
         while(1)
         {
             if (kill_send_data) {
-                vTaskDelete(NULL);
                 max30003_sw_reset();     // Quiesce MAX30003
+                vTaskDelete(NULL);
             }
 
             db = max30003_read_send_data();
@@ -198,7 +200,8 @@ void tcp_conn(void *pvParameters)
     /*create tcp socket*/
     int socket_ret;
     TaskHandle_t tx_rx_task;
-    vTaskDelay(2000 / portTICK_RATE_MS);
+    //vTaskDelay(2000 / portTICK_RATE_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
     while (1) {
         ESP_LOGI(TAG, "create_tcp_server.");
         socket_ret=create_tcp_server();
