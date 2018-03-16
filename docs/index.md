@@ -1,3 +1,8 @@
+---
+layout: page
+homepage: true
+---
+
 ![The HeartyPatch](images/heartypatch2.jpg)
 
 HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with HRV (Heart Rate Variability) analysis. It is based on the popular ESP32 system-on-a-chip.
