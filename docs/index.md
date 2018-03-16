@@ -32,16 +32,18 @@ You can download and install the app from the [Google Play Store](https://play.g
 
 # Modes of operation
 
-### Bluetooth LE Mode
+HeartyPatch at any time can work in only ONE of the following modes. Wi-Fi and BLE do not work together as of now.
+
+## Bluetooth LE Mode
 With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval measurement and send it over BLE through a standard [Heart-rate BLE service](https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml), as well as a separate custom HRV service that will provide parameters used for HRV analysis such as SD, Mean RR, PNN50 and SDNN.
 
-### Continuous ECG Streaming mode over WiFi/TCP
+![HeartyPatch App for Android](images/app-shot2.png)
 
-The HeartyPatch can also do live ECG streaming from the chest. This works similar to a heart-rate monitor. Below is a screen capture of the device working in ECG mode. The data is sent over a TCP socket over WiFi.
+## Continuous ECG Streaming mode over WiFi/TCP
+
+The HeartyPatch can also do live ECG streaming from the chest. This works similar to a heart-rate monitor. Below is a screen capture of the device working in ECG mode. The data is sent over a TCP socket over WiFi. To get the WiFi mode turned on, you will have to [flash a different firmware onto the device](#continuous-ecg-streaming-mode-over-wifitcp).
 
 ![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
-
-To get the WiFi mode turned on, you will have to [flash a different firmware onto the device](#continuous-ecg-streaming-mode-over-wifitcp).
 
 # Updating the firmware
 
@@ -74,7 +76,7 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
 
 `Please make sure that correct version of all of the above tools are installed before proceeding.`
 
-The folder "heartypatch-ble" in the "Firmware" contains the  code of preloaded firmware on the heartypatch board, which calculates RR interval, heart rate and time domain parameters for hrv analysis and sends them through BLE.
+The folder "heartypatch-ble" in the "Firmware" contains the code for the preloaded firmware on the HeartyPatch, which calculates R-R interval, heart rate and time domain parameters for HRV analysis and sends them through BLE.
 
 Now that you have the code and ready to build, you will need to configure the build options for heartypatch through menuconfig utility:
 
@@ -163,6 +165,7 @@ Offset | Byte Value | Description
 18-...| ECG Data samples | Currently 8 samples / packet
 ...| 0x0B | End of Frame
 
+
 You can download the ProtoCentral TCP client GUI for your platform from the following link.
 
 [Download TCP Client GUI](https://github.com/Protocentral/protocentral_heartypatch/releases/latest)
@@ -171,25 +174,23 @@ After you unzip and run the executable program on your computer, choose the defa
 
 ![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
 
-Congratulations !
-
 # Frequently Asked Questions
 
-**Why is the heart-rate not stable? There's a lot of variation**
+  **Why is the heart-rate not stable? There's a lot of variation**
 
-Do not worry, that's what is [Heart-rate variability](https://en.wikipedia.org/wiki/Heart_rate_variability) and HeartyPatch displays real-time beat-to-beat heart rate. Heart-rate is supposed to vary from beat-to-beat.
+  Do not worry, that's what is [Heart-rate variability](https://en.wikipedia.org/wiki/Heart_rate_variability) and HeartyPatch displays real-time beat-to-beat heart rate. Heart-rate is supposed to vary from beat-to-beat.
 
-**How do I get the full ECG signal from the device?**
+  **How do I get the full ECG signal from the device?**
 
-Please read our [Guide to program the device the TCP Streaming mode](streaming-ecg-tcp-mode.md)
+  Please read our [Guide to program the device the TCP Streaming mode](streaming-ecg-tcp-mode.md)
 
-**I have problems getting the code to compile. What do I do?**
+  **I have problems getting the code to compile. What do I do?**
 
-Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](firmware-upgrades.md)
+  Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](firmware-upgrades.md)
 
-**Help, there is not LED flashing on the device.**
+  **Help, there is not LED flashing on the device.**
 
-By default, the LED would not flash. This is done to conserve battery power. This can be enabled in the software though.
+  By default, the LED would not flash. This is done to conserve battery power. This can be enabled in the software though.
 
 *We will continue to add to this list based on user input, so please check this list if something goes wrong.*
 

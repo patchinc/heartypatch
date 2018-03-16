@@ -43,6 +43,7 @@
 *.pdb
 *.DS_Store
 *.csv
+*.DS_Store
 
 # Kernel Module Compile Results
 *.mod*
