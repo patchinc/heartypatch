@@ -96,7 +96,7 @@ BLE mode at this time does not support ECG stream since the MAX30003 sensor is c
 
 * Navigate to component config -> esp32-specific ->main XTAL frequency and select 26 Mhz as the board crystal
 
-  ![xtal](images/main-xtal-frequency.png)
+  ![Setting crystal freqency](images/xtal-frequency.png)
 
 * Save the configuration by selecting `<save>` and close menuconfig
 
