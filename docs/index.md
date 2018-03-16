@@ -55,8 +55,6 @@ It is important to always keep your firmware up-to-date for best results. We kee
 
 Be on the lookout for new firmware releases on our Github releases page at https://github.com/Protocentral/protocentral_heartypatch
 
-# Compiling HeartyPatch Firmware
-
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
  for development. You will need to install and configure the following components to setup a development environment:
 
