@@ -8,7 +8,9 @@ homepage: true
 
 HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with HRV (Heart Rate Variability) analysis. It is based on the popular ESP32 system-on-a-chip.
 
-If you don't already have one, you can buy one on [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
+If you don't already have one, you can buy one on our [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
+
+![HeartyPatch Parts](images/heartypatch-parts.png)
 
 # Getting Started with HeartyPatch
 
@@ -25,6 +27,7 @@ You can download and install the app from the [Google Play Store](https://play.g
 [![HeartyPatch App for Android](images/google-play-badge.png)](https://play.google.com/store/apps/details?id=com.protocentral.heartypatch)
 
 *Note: The android app for HeartyPatch is still in BETA and there might be some instability as a result.*
+
 *Note: HeartyPatch can also be used with any Android app that supports the heart-rate profile.*
 
 # Modes of operation
@@ -39,10 +42,6 @@ The HeartyPatch can also do live ECG streaming from the chest. This works simila
 ![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
 
 To get the WiFi mode turned on, you will have to [flash a different firmware onto the device](#continuous-ecg-streaming-mode-over-wifitcp).
-
-### Parts of the HeartyPatch
-
-![HeartyPatch Parts](images/heartypatch-parts.png)
 
 # Updating the firmware
 
@@ -81,43 +80,43 @@ Now that you have the code and ready to build, you will need to configure the bu
 
 * Open the terminal and navigate to the folder which contains the heartypatch code 	
 * Start the project configuration utility **menuconfig**     		
-`make menuconfig`
+  `make menuconfig`
 
-![menuconfig](images/makemenuconfig.png)
+  ![menuconfig](images/makemenuconfig.png)
 
 * Configure your serial port under *Serial flasher config -> Default serial port*
-![port](images/serialport.png)
+  ![port](images/serialport.png)
 
 * Use the *Heartypatch configuration* to enable ble mode.
-![heartypatch-config](images/heartypatch-config-ble.png)
+  ![heartypatch-config](images/heartypatch-config-ble.png)
 
-BLE mode at this time does not support ECG stream since max30003 sensor is configured for rtor detectoin. By enabling the wifi, you may get hr and rr values through TCP in the heartypatch GUI. For ECG strem you may use the heartypatch-stream-tcp code [protocentral-heartypatch/firmware/heatypatch-stream-tcp]
+BLE mode at this time does not support ECG stream since the MAX30003 sensor is configured for R-R detection only. By enabling the wifi, you may get hr and rr values through TCP in the Heartypatch GUI. For ECG stream you may use the heartypatch-stream-tcp code [protocentral-heartypatch/firmware/heatypatch-stream-tcp]
 
 * Navigate to component config -> esp32-specific ->main XTAL frequency and select 26 Mhz as the board crystal
-![xtal](images/main-xtal-frequency.png)
+  ![xtal](images/main-xtal-frequency.png)
 
-* save the configuration by selecting `<save>` and close menuconfig
+* Save the configuration by selecting `<save>` and close menuconfig
 
-Run the makefile (assuming previous steps are done correctly):
+* Run the makefile (assuming previous steps are done correctly):
 
-`make` or `make -j5`
+  `make` or `make -j5`
 
-To flash the firmware on to the board, just use:
+* To flash the firmware on to the board, just use:
 
-`make flash`
+  `make flash`
 
-If the flashing is successful, you should see something similar to the below screen:
+  If the flashing is successful, you should see something similar to the below screen:
 
-![ESP Success](images/esp-flash-success.png)
+  ![ESP Success](images/esp-flash-success.png)
 
-**ECG STREAMING**
+# Continuous ECG mode
 
 The folder `heartypatch-stream-tcp` contains the code for streaming ECG.
 
 Before flashing this code, enable wifi, TCP and mdns through `makemenuconfig` similar to the process described in the previous section.
 
 * Start makemenuconfig and navigate to *Heartypatch configuration*, set your wifi ssid and password, enable mdns and TCP:
-![Heartypatch config](images/heartypatch-config-tcp.png)
+  ![Heartypatch config](images/heartypatch-config-tcp.png)
 
 * Configure the serial port under Serial flasher config -> Default serial port
 * Navigate to *Component config -> esp32-specific ->main XTAL frequency* and select 26 MHz as the board crystal
@@ -143,6 +142,33 @@ You can open the IDF monitor to see the debug messages by using the command:
 Once the heartypatch is connected with the wifi, open the gui from the project folder and you should be able see the ECG stream.  
 
 More information about this process and the ESP32 framework is available in the [ESP32 Get Started Guide](http://esp-idf.readthedocs.io/en/latest/get-started/).
+
+# The TCP Client GUI
+
+The HeartyPatch is now configured as a TCP sever ready for connection from a TCP client. The HeartyPatch sends data out in the following packet format.
+
+Offset | Byte Value | Description
+------ | ----------- | ------------------
+0 | 0x0A | Start of frame
+1 | 0xFA | Start of frame
+2| Payload Size LSB |
+3| Payload Size MSB |
+4| Protocol version | (currently 0x03)
+5-8| Packet sequence | incremental number
+9-16| Timestamp | From ESP32 gettimeofday()
+17-20| R-R Interval |
+18-...| ECG Data samples | Currently 8 samples / packet
+...| 0x0B | End of Frame
+
+You can download the ProtoCentral TCP client GUI for your platform from the following link.
+
+[Download TCP Client GUI](https://github.com/Protocentral/protocentral_heartypatch/releases/latest)
+
+After you unzip and run the executable program on your computer, choose the default address (heartypatch.local) and click connect. You should see a screen like this:
+
+![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
+
+Congratulations !
 
 # Frequently Asked Questions
 
