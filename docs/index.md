@@ -152,18 +152,18 @@ More information about this process and the ESP32 framework is available in the 
 
 The HeartyPatch is now configured as a TCP sever ready for connection from a TCP client. The HeartyPatch sends data out in the following packet format.
 
-Offset | Byte Value | Description
------- | ----------- | ------------------
-0 | 0x0A | Start of frame
-1 | 0xFA | Start of frame
-2| Payload Size LSB |
-3| Payload Size MSB |
-4| Protocol version | (currently 0x03)
-5-8| Packet sequence | incremental number
-9-16| Timestamp | From ESP32 gettimeofday()
-17-20| R-R Interval |
-18-...| ECG Data samples | Currently 8 samples / packet
-...| 0x0B | End of Frame
+| Offset| Byte Value  | Description|
+------  | ----------- | -----------
+| 0     | 0x0A | Start of frame
+| 1     | 0xFA | Start of frame
+| 2     | Payload Size LSB |
+| 3     | Payload Size MSB |
+| 4     | Protocol version | (currently 0x03)
+|5-8    | Packet sequence | incremental number
+|9-16   | Timestamp | From ESP32 gettimeofday()
+|17-20  | R-R Interval |
+|18-... | ECG Data samples | Currently 8 samples / packet|
+|...    | 0x0B | End of Frame|
 
 
 You can download the ProtoCentral TCP client GUI for your platform from the following link.
@@ -176,21 +176,31 @@ After you unzip and run the executable program on your computer, choose the defa
 
 # Frequently Asked Questions
 
-  **Why is the heart-rate not stable? There's a lot of variation**
+  1. **Why is the heart-rate not stable? There's a lot of variation**
 
   Do not worry, that's what is [Heart-rate variability](https://en.wikipedia.org/wiki/Heart_rate_variability) and HeartyPatch displays real-time beat-to-beat heart rate. Heart-rate is supposed to vary from beat-to-beat.
 
-  **How do I get the full ECG signal from the device?**
+  2. **How do I get the full ECG signal from the device?**
 
   Please read our [Guide to program the device the TCP Streaming mode](streaming-ecg-tcp-mode.md)
 
-  **I have problems getting the code to compile. What do I do?**
+  3. **I have problems getting the code to compile. What do I do?**
 
   Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](firmware-upgrades.md)
 
-  **Help, there is not LED flashing on the device.**
+  4. **Help, there is not LED flashing on the device.**
 
   By default, the LED would not flash. This is done to conserve battery power. This can be enabled in the software though.
+
+  5. **Why is the ECG  signal too noisy?**
+
+  Noise is very common in ECG systems and they usually use filters to take them out. The HeartyPatch already has hardware as well as software filters to remove noise. However, there are still some conditions which can cause the signal to be noisy:
+
+    * Contact is key. Make sure that the electrode pad is fully flat on the body and it is positioned properly.
+    * Make sure that the position of the HeartyPatch is correct (refer to the video). Other positions may not provide a strong signal
+    * Do not use the HeartyPatch on the body while it is connected to the USB cable. Always remove the cable before wearing the Heartypatch.
+    * A common source of noise is dry skin. Dry skin does not give good electrical conductivity.
+    * Do not re-use ECG electrodes. The quality of contact would reduce with each use. 
 
 *We will continue to add to this list based on user input, so please check this list if something goes wrong.*
 
