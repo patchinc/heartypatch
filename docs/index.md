@@ -182,11 +182,11 @@ After you unzip and run the executable program on your computer, choose the defa
 
 * **How do I get the full ECG signal from the device?**
 
-  Please read our [Guide to program the device the TCP Streaming mode](streaming-ecg-tcp-mode.md)
+  Please read our [Guide to program the device the TCP Streaming mode](#continuous-ecg-mode)
 
 * **I have problems getting the code to compile. What do I do?**
 
-  Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](firmware-upgrades.md)
+  Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](#updating-the-firmware)
 
 * **Help, there is not LED flashing on the device.**
 
