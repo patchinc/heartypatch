@@ -176,23 +176,23 @@ After you unzip and run the executable program on your computer, choose the defa
 
 # Frequently Asked Questions
 
-1. Why is the heart-rate not stable? There's always variation.
+* **Why is the heart-rate not stable? There's always variation.**
 
   Do not worry, that's what is [Heart-rate variability](https://en.wikipedia.org/wiki/Heart_rate_variability) and HeartyPatch displays real-time beat-to-beat heart rate. Heart-rate is supposed to vary from beat-to-beat.
 
-2. How do I get the full ECG signal from the device?
+* **How do I get the full ECG signal from the device?**
 
   Please read our [Guide to program the device the TCP Streaming mode](streaming-ecg-tcp-mode.md)
 
-3. I have problems getting the code to compile. What do I do?
+* **I have problems getting the code to compile. What do I do?**
 
   Most of the problems in compilation arise from having the wrong versions of the ESP-IDF. Please make sure the versions of the esp-idf as well as the Xtensa toochain match the ones given in out [Guide to firmware upgrades](firmware-upgrades.md)
 
-4. Help, there is not LED flashing on the device.
+* **Help, there is not LED flashing on the device.**
 
   By default, the LED would not flash. This is done to conserve battery power. This can be enabled in the software though.
 
-5. Why is the ECG  signal too noisy?
+* **Why is the ECG  signal too noisy?**
 
   Noise is very common in ECG systems and they usually use filters to take them out. The HeartyPatch already has hardware as well as software filters to remove noise. However, there are still some conditions which can cause the signal to be noisy:
 
