@@ -1,9 +1,9 @@
 # name of the software
-name: ProtoCentral Documentation
+name: ProtoCentral HeartyPatch
 
 project:
     version: 0.1.0
-    download_url: https://github.com/allejo/jekyll-docs-theme/releases
+    download_url: https://github.com/Protocentral/protocentral_heartypatch/releases
 
 license:
     software: MIT License
@@ -15,12 +15,12 @@ license:
 links:
     header:
       - title: GitHub
-        url: https://github.com/allejo/jekyll-docs-theme
+        url: https://github.com/Protocentral/protocentral_heartypatch
     footer:
       - title: GitHub
-        url: https://github.com/allejo/jekyll-docs-theme
+        url: https://github.com/Protocentral/protocentral_heartypatch
       - title: Issues
-        url: https://github.com/allejo/jekyll-docs-theme/issues?state=open
+        url: https://github.com/Protocentral/protocentral_heartypatch/issues?state=open
 
 ui:
     header:
@@ -30,8 +30,8 @@ ui:
 
 social:
     github:
-        user: allejo
-        repo: jekyll-docs-theme
+        user: protocentral
+        repo: protocentral_heartypatch
     twitter:
         enabled: false
         via:
