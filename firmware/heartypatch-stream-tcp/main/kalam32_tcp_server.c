@@ -80,7 +80,8 @@ static void send_data(void *pvParameters)
                 break;
             send(connect_socket, db, PACKET_SIZE, 0);
         }
-        vTaskDelay(2/portTICK_RATE_MS);
+        //vTaskDelay(2/portTICK_RATE_MS);
+        max30003_poll_wait();
     }
 }
 
