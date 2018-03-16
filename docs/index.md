@@ -10,13 +10,11 @@ HeartyPatch is a completely open source, single-lead, ECG-HR wearable patch with
 
 If you don't already have one, you can buy one on [Crowd Supply](https://www.crowdsupply.com/protocentral/heartypatch) campaign page. We have started shipping them out to backers.
 
-If you face any issue in any part of this guide or with the HeartyPatch in general, please make sure to check our [Frequently Asked Questions](faq.md). If it does not address your question, please email us at support@protocentral.com.
-
 # Getting Started with HeartyPatch
 
 If you just want to use the HeartyPatch with the pre-loaded firmware, it comes ready to go. You do not have to do any programming to get it working. The pre-loaded firmware send HRV values over BLE.
 
-**HeartyPatch can be used with any Android app that supports the heart-rate profile.**
+<iframe src="https://player.vimeo.com/video/249182147" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
 ## The HeartyPatch App for Android - BETA
 
@@ -27,6 +25,7 @@ You can download and install the app from the [Google Play Store](https://play.g
 [![HeartyPatch App for Android](images/google-play-badge.png)](https://play.google.com/store/apps/details?id=com.protocentral.heartypatch)
 
 *Note: The android app for HeartyPatch is still in BETA and there might be some instability as a result.*
+*Note: HeartyPatch can also be used with any Android app that supports the heart-rate profile.*
 
 # Modes of operation
 
@@ -39,15 +38,11 @@ The HeartyPatch can also do live ECG streaming from the chest. This works simila
 
 ![HeartyPatch Streaming ECG](images/streaming-tcp.gif)
 
-**To get the WiFi mode turned on, you will have to flash the firmware onto the device. The following link provides detailed step-by-step instructions about how to reprogram the HeartyPatch.**
-
-### [Programming HeartyPatch for ECG streaming over WiFi/TCP](streaming-ecg-tcp-mode.md)
+To get the WiFi mode turned on, you will have to [flash a different firmware onto the device](#continuous-ecg-streaming-mode-over-wifitcp).
 
 ### Parts of the HeartyPatch
 
 ![HeartyPatch Parts](images/heartypatch-parts.png)
-
-<iframe src="https://player.vimeo.com/video/249182147" width="640" height="360" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
 # Updating the firmware
 
@@ -59,7 +54,7 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
  for development. You will need to install and configure the following components to setup a development environment:
 
 * **The Xtensa ESP32 toolchain**
-  (*Please make sure download the toolchain from the links at: http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain*)
+  *Please make sure to download the toolchain from the* [Espressif Setup Guide for v2.1](http://esp-idf.readthedocs.io/en/v2.1/get-started/index.html#standard-setup-of-toolchain)
 
 This version of the esp-idf compiles well only with the toolchain version 1.22.0-61-gab8375a-5.2.0.
 
