@@ -5,14 +5,15 @@ This repository contains the hardware, firmware and GUI software plans for the H
 
 ## Detailed documentation is available at [heartypatch.protocentral.com](http://heartypatch.protocentral.com/)
 
+
+For details and updates, check out our Hackaday Page: [https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32](https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32)
+
+You can now buy HeartyPatch at https://www.crowdsupply.com/protocentral/heartypatch
+
 ![HeartyPatch](docs/images/heartypatch2.jpg)
 
 ![HeartyPatch Screenshot](docs/images/heartypatch-screen.jpg)
 
-### For details and updates, check out our Hackaday Page: [https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32](https://hackaday.io/project/21046-heartypatch-a-single-lead-ecg-hr-patch-with-esp32)
-
-### You can now buy HeartyPatch !!!
-### Support us at https://www.crowdsupply.com/protocentral/heartypatch
 
 
 License Information
