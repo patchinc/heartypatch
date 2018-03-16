@@ -64,8 +64,6 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
 
   Setup guides for these components are available on the [ESP-IDF documentation site](https://esp-idf.readthedocs.io/en/v2.1/get-started/index.html).
 
-`Please make sure that correct version of all of the above tools are installed before proceeding.`
-
 * Clone our [Github repository](https://github.com/Protocentral/protocentral_heartypatch) of code for the ESP32:
 
   `git clone https://github.com/Protocentral/protocentral_heartypatch.git`
@@ -73,6 +71,8 @@ The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-i
   [or download a zip file of the latest master branch](https://github.com/Protocentral/protocentral_heartypatch/archive/master.zip).
 
 * Download this zip file, rename it to whatever you want to. Change to this directory and then start building.
+
+`Please make sure that correct version of all of the above tools are installed before proceeding.`
 
 The folder "heartypatch-ble" in the "Firmware" contains the  code of preloaded firmware on the heartypatch board, which calculates RR interval, heart rate and time domain parameters for hrv analysis and sends them through BLE.
 
@@ -85,14 +85,17 @@ Now that you have the code and ready to build, you will need to configure the bu
   ![menuconfig](images/makemenuconfig.png)
 
 * Configure your serial port under *Serial flasher config -> Default serial port*
+
   ![port](images/serialport.png)
 
-* Use the *Heartypatch configuration* to enable ble mode.
+* Use the *Heartypatch configuration* to enable BLE mode
+
   ![heartypatch-config](images/heartypatch-config-ble.png)
 
 BLE mode at this time does not support ECG stream since the MAX30003 sensor is configured for R-R detection only. By enabling the wifi, you may get hr and rr values through TCP in the Heartypatch GUI. For ECG stream you may use the heartypatch-stream-tcp code [protocentral-heartypatch/firmware/heatypatch-stream-tcp]
 
 * Navigate to component config -> esp32-specific ->main XTAL frequency and select 26 Mhz as the board crystal
+
   ![xtal](images/main-xtal-frequency.png)
 
 * Save the configuration by selecting `<save>` and close menuconfig
