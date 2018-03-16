@@ -2,7 +2,7 @@
 name: ProtoCentral HeartyPatch
 
 project:
-    version: 0.1.0
+    version: 1.1.0
     download_url: https://github.com/Protocentral/protocentral_heartypatch/releases
 
 license:
@@ -33,13 +33,13 @@ social:
         user: protocentral
         repo: protocentral_heartypatch
     twitter:
-        enabled: false
-        via:
-        hash:
-        account:
+        enabled: true
+        via: 
+        hash: #heartypatch
+        account: protocentral
     facebook:
-        enabled: false
-        profileUrl:
+        enabled: true
+        profileUrl: https://www.facebook.com/protocentral
 
 analytics:
     google: UA-123456-1
