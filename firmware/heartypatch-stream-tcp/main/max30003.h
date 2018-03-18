@@ -25,12 +25,15 @@
 #define   NO_OP           0x7F
 
 #define PIN_NUM_FCLK      13
+#define MAX30003_INT_PIN  27// for kalam board02
 
 void max30003_sw_reset(void);
+void max30003_poll_wait(void);
 void max30003_start_timer(void);
 void MAX30003_ReadID(void);
 void MAX30003_init_sequence(void);
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs );
+void max30003_configure(void);
 uint8_t* max30003_read_send_data(void );
 
 #endif

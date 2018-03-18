@@ -36,6 +36,8 @@
 int connectedflag = 0;
 int total_data = 0;
 
+static int kill_send_data = false;
+
 /*AP info and tcp_server info*/
 #define DEFAULT_SSID CONFIG_TCP_PERF_WIFI_SSID
 #define DEFAULT_PWD CONFIG_TCP_PERF_WIFI_PASSWORD
@@ -60,14 +62,26 @@ static void send_data(void *pvParameters)
     db=databuff;
     vTaskDelay(100/portTICK_RATE_MS);
     ESP_LOGI(TAG, "start sending...");
+    kill_send_data = false;
+
+    max30003_configure();
 
 	while(1)
     {
-        db = max30003_read_send_data();
-  	     //send function
-      	if (db != NULL)
-      	    send(connect_socket, db, PACKET_SIZE, 0);
-        vTaskDelay(2/portTICK_RATE_MS);
+        while(1)
+        {
+            if (kill_send_data) {
+                max30003_sw_reset();     // Quiesce MAX30003
+                vTaskDelete(NULL);
+            }
+
+            db = max30003_read_send_data();
+            if (db == NULL)
+                break;
+            send(connect_socket, db, PACKET_SIZE, 0);
+        }
+        //vTaskDelay(2/portTICK_RATE_MS);
+        max30003_poll_wait();
     }
 }
 
@@ -187,7 +201,8 @@ void tcp_conn(void *pvParameters)
     /*create tcp socket*/
     int socket_ret;
     TaskHandle_t tx_rx_task;
-    vTaskDelay(2000 / portTICK_RATE_MS);
+    //vTaskDelay(2000 / portTICK_RATE_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
     while (1) {
         ESP_LOGI(TAG, "create_tcp_server.");
         socket_ret=create_tcp_server();
@@ -198,22 +213,19 @@ void tcp_conn(void *pvParameters)
         }
         /*create a task to tx/rx data*/
         xTaskCreate(&send_data, "send_data", 4096, NULL, 4, &tx_rx_task);
-        int flag = true;
-        while (flag)
+        while (1)
         {
-            vTaskDelay(3000 / portTICK_RATE_MS);//every 3s
+            vTaskDelay(1500 / portTICK_RATE_MS);//every 3s
             int err_ret = check_socket_error_code();
             if (err_ret == ECONNRESET)
             {
-                ESP_LOGI(TAG, "disconnected... stop.");
+              ESP_LOGI(TAG, "disconnected... stop.");
               close_socket();
-              flag = false;
+              kill_send_data = true;
+              break;
             }
         }
-        vTaskDelete(&tx_rx_task);
-        max30003_sw_reset();
         ESP_LOGI(TAG, "restart");
-        flag = true;
     }
 
     close_socket();
@@ -223,7 +235,7 @@ void tcp_conn(void *pvParameters)
 
 void kalam_tcp_start(void)
 {
- xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
+    xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
 }
 
 /*********************** END TCP Server Code *****************/
