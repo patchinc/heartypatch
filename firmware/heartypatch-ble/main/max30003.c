@@ -402,7 +402,7 @@ float sdnn_ff(unsigned int array[])
 		sumsdnn = sumsdnn + diff;		
 	}
     
-    sdnn = (sqrt(sumsdnn/(MAX-1)));
+    sdnn = (sqrt(sumsdnn/(MAX)));
     return	 sdnn;
 }
 
