@@ -1,4 +1,4 @@
- #define PIN_NUM_0   17
+#define PIN_NUM_0   17
 #define PIN_NUM_1   14
 #define PIN_NUM_2   13
 #define PIN_NUM_4   2
@@ -19,10 +19,18 @@
 #define PIN_I2C_SDA  21
 #define PIN_I2C_SCL  22
 
-#define PIN_SPI_CS   25
 #define PIN_SPI_MOSI 23
 #define PIN_SPI_MISO 19
 #define PIN_SPI_SCK  18
+#define PIN_SPI_CS   04
 
+#define DATA_PIN   26
+#define CLOCK_PIN   25
+//#ifdef HRV_BADGE
+//#define PIN_SPI_CS   04
+//#else
+//#define PIN_SPI_CS   25
+
+//#endif
 
 void kalam32_uart_init(void);

@@ -29,7 +29,7 @@
 #define MAX 20
 volatile unsigned int HR ,RR ;
 
- xQueueHandle rgbLedSem;
+xQueueHandle rgbLedSem;
 QueueHandle_t xQueue_tcp;
 
 void kalam_start_max30003();

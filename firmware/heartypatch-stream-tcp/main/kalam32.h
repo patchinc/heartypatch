@@ -22,7 +22,12 @@
 #define PIN_I2C_SDA  21
 #define PIN_I2C_SCL  22
 
-#define PIN_SPI_CS   25
+#define PIN_SPI_CS   04 //for badge
+
+#define DATA_PIN   26
+#define CLOCK_PIN   25
+
+//#define PIN_SPI_CS   25
 #define PIN_SPI_MOSI 23
 #define PIN_SPI_MISO 19
 #define PIN_SPI_SCK  18

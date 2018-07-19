@@ -48,7 +48,6 @@ static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT_kalam = BIT0;
 
 uint8_t* db;
-mdns_server_t * mdns = NULL;
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -89,9 +88,9 @@ void kalam_wifi_init(void)
       ESP_ERROR_CHECK( esp_wifi_start() );
 
 #ifdef CONFIG_MDNS_ENABLE
-      esp_err_t err = mdns_init(TCPIP_ADAPTER_IF_STA, &mdns);
-      ESP_ERROR_CHECK( mdns_set_hostname(mdns, KALAM32_MDNS_NAME) );
-      ESP_ERROR_CHECK( mdns_set_instance(mdns, KALAM32_MDNS_NAME) );
+      esp_err_t err = mdns_init();
+      ESP_ERROR_CHECK( mdns_hostname_set(KALAM32_MDNS_NAME) );
+      ESP_ERROR_CHECK( mdns_instance_name_set(KALAM32_MDNS_NAME) );
 #endif
 
 }
@@ -100,16 +99,28 @@ void app_main(void)
 {
     nvs_flash_init();
 
+    gpio_pad_select_gpio(CLOCK_PIN);
+  	gpio_set_direction(CLOCK_PIN, GPIO_MODE_OUTPUT);
+
+  	gpio_pad_select_gpio(DATA_PIN);
+  	gpio_set_direction(DATA_PIN, GPIO_MODE_OUTPUT);
+
+    gpio_pad_select_gpio(14);
+  	gpio_set_direction(14, GPIO_MODE_OUTPUT);
+  	gpio_set_level(14, 1);
+    
+    vTaskDelay(500/ portTICK_PERIOD_MS);
+
     max30003_initchip(PIN_SPI_MISO,PIN_SPI_MOSI,PIN_SPI_SCK,PIN_SPI_CS);
-	vTaskDelay(2/ portTICK_PERIOD_MS);
+	   vTaskDelay(2/ portTICK_PERIOD_MS);
 
     kalam_wifi_init();
-	
+
     /* Wait for WiFI to show as connected */
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT_kalam,false, true, portMAX_DELAY);
-    
+
 #ifdef CONFIG_TCP_ENABLE					//enable it from makemenuconfig
     kalam_tcp_start();
 #endif
-   
+
 }
