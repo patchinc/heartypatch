@@ -33,6 +33,8 @@ static xQueueHandle max30003intSem;
 SemaphoreHandle_t updateRRSemaphore = NULL;
 extern unsigned int global_heartRate ;
 
+uint8_t max30003_Status_Reg[5] ;
+
 unsigned int array[MAX];
 int rear = -1;
 int i ;
@@ -63,7 +65,7 @@ void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     BaseType_t mustYield=false;
     xSemaphoreGiveFromISR(max30003intSem, &mustYield);
-    	    
+
 }
 
 
@@ -179,7 +181,7 @@ void read_data(void *pvParameters)			// calls max30003read_data to update to aws
    while(1)
     {
 		 xSemaphoreTake(max30003intSem,  portMAX_DELAY);//Wait until slave is ready
-	   
+
 		 db = max30003_read_send_data();
 		 xSemaphoreGive(updateRRSemaphore);
 	   	 vTaskDelay(10/portTICK_RATE_MS);
@@ -247,8 +249,10 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     max30003_sw_reset();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    MAX30003_Reg_Write(CNFG_GEN, 0x080004);
+    MAX30003_Reg_Write(CNFG_GEN, 0x081244);
     vTaskDelay(100 / portTICK_PERIOD_MS);
+    //MAX30003_Reg_Write(CNFG_GEN, 0x080004);
+    //vTaskDelay(100 / portTICK_PERIOD_MS);
 
     MAX30003_Reg_Write(CNFG_CAL, 0x720000);  // 0x700000
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -264,22 +268,22 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
 
     MAX30003_Reg_Write(MNGR_INT, 0x000024);  //MAX30003_Reg_Write(MNGR_INT, 0x000014);
     vTaskDelay(100 / portTICK_PERIOD_MS);
-	
-	MAX30003_Reg_Write(EN_INT,0x000401);
+
+	   MAX30003_Reg_Write(EN_INT,0x000401);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
-	
+
 	max30003_drdy_interrupt_enable();
 
 
 }
 
 uint8_t* max30003_read_send_data(void)
-{	
+{
     update_beat_blr();
     max30003_reg_read(RTOR);
-     
+
     unsigned long RTOR_msb = (unsigned long) (SPI_temp_32b[0]);
     unsigned char RTOR_lsb = (unsigned char) (SPI_temp_32b[1]);
 
@@ -288,12 +292,12 @@ uint8_t* max30003_read_send_data(void)
 
     float hr =  60 /((float)rtor*0.0078125);
     float rtor_ms = ((float)rtor*0.0078125);
-	  
-    global_heartRate = (unsigned int)hr ; 
+
+    global_heartRate = (unsigned int)hr ;
     HR = (unsigned int)hr;  // type cast to int
     RR = (unsigned int)((float)rtor*7.8125) ;  //8ms
     k++;
- 
+
 	printf("hr %d\n",HR);
     update_hr(HR);
     update_rr(RR);
@@ -305,27 +309,27 @@ uint8_t* max30003_read_send_data(void)
 	   {
 		   array[i]=array[i+1];
 	   }
-		   array[MAX-1] = RR;	  
+		   array[MAX-1] = RR;
     }else
-    {		  
+    {
 	   rear++;
 	   array[rear] = RR;
     }
-	
+
    if(k>=MAX)
-   {	
-				
+   {
+
        max_f = max(array);
 	   min_f = min(array);
 	   mean_f = mean(array);
 	   sdnn_f = sdnn_ff(array);
-	   pnn_f = pnn_ff(array);	
-	
+	   pnn_f = pnn_ff(array);
+
 	   update_mean((int)(mean_f*100));
        update_sdnn((uint16_t)(sdnn_f*100));
-       update_pnn((uint16_t)(per_pnn*100));             
-   }						
-	  
+       update_pnn((uint16_t)(per_pnn*100));
+   }
+
    DataPacketHeader[0] = 0x0A;
    DataPacketHeader[1] = 0xFA;
    DataPacketHeader[2] = 0x0C;
@@ -351,11 +355,41 @@ uint8_t* max30003_read_send_data(void)
    DataPacketHeader[18] = 0x0b;
 
    return  DataPacketHeader;
-		
+
+}
+
+void max30003_read_status(unsigned char WRITE_ADDRESS)
+{
+    uint8_t Reg_address=WRITE_ADDRESS;
+
+    SPI_TX_Buff[0] = (Reg_address<<1 ) | RREG;
+    SPI_TX_Buff[1]=0x00;
+    SPI_TX_Buff[2]=0x00;
+    SPI_TX_Buff[3]=0x00;
+
+    esp_err_t ret;
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));       //Zero out the transaction
+
+    t.length=32;
+    t.rxlength=32;
+    t.tx_buffer=&SPI_TX_Buff;
+    t.rx_buffer=&SPI_RX_Buff;
+
+    t.user=(void*)0;
+    ret=spi_device_transmit(spi, &t);
+    assert(ret==ESP_OK);            //Should have had no issues.
+
+    max30003_Status_Reg[0] = SPI_RX_Buff[0];
+    max30003_Status_Reg[1] = SPI_RX_Buff[1];
+    max30003_Status_Reg[2] = SPI_RX_Buff[2];
+    max30003_Status_Reg[3] = SPI_RX_Buff[3];
+
+    //printf("%x,%x,%x,OK",SPI_RX_Buff[0],SPI_RX_Buff[1],SPI_RX_Buff[2]);
 }
 
 int max(unsigned int array[])
-{  
+{
    for(i=0;i<MAX;i++)
    {
 		if(array[i]>max_t)
@@ -367,47 +401,47 @@ int max(unsigned int array[])
 }
 
 int min(unsigned int array[])
-{   
+{
 	min_t = max_f;
 	for(i=0;i<MAX;i++)
 	{ if(array[i]< min_t)
 		{
-		min_t = array[i];	
+		min_t = array[i];
 		}
 	}
 	return min_t;
 }
 
 float mean(unsigned int array[])
-{ 
+{
     int sum = 0;
-    float mean_rr;	
+    float mean_rr;
 	for(i=0;i<(MAX);i++)
 	{
 		sum = sum + array[i];
 	}
-	mean_rr = (((float)sum)/ MAX);	
+	mean_rr = (((float)sum)/ MAX);
 	return mean_rr;
-}	
+}
 
 float sdnn_ff(unsigned int array[])
 {
 	int sumsdnn = 0;
 	int diff;
-	
+
     for(i=0;i<(MAX);i++)
 	{
 		diff = (array[i]-(mean_f));
 		diff = diff*diff;
-		sumsdnn = sumsdnn + diff;		
+		sumsdnn = sumsdnn + diff;
 	}
-    
+
     sdnn = (sqrt(sumsdnn/(MAX)));
     return	 sdnn;
 }
 
 float pnn_ff(unsigned int array[])
-{ 
+{
     unsigned int pnn50[MAX];
     count = 0;
 	sqsum = 0;
@@ -417,7 +451,7 @@ float pnn_ff(unsigned int array[])
      sqsum = sqsum + (pnn50[i]*pnn50[i]);
          if(pnn50[i]>50)
          {
-             count = count + 1;		 
+             count = count + 1;
          }
 	}
 

@@ -43,6 +43,8 @@ extern xSemaphoreHandle print_mux;
 char uart_data[50];
 const int uart_num = UART_NUM_1;
 uint8_t* db;
+volatile bool lead_on = false;
+extern uint8_t max30003_Status_Reg[5] ;
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT_kalam = BIT0;
@@ -117,6 +119,34 @@ void kalam_wifi_init(void)
 
 }
 
+void rainbow(void *pvParameters)
+{
+
+
+  while (true){
+
+    max30003_read_status(STATUS);
+    if((max30003_Status_Reg[1] & 0x10) )
+    {
+      lead_on = false;
+      printf("leadoff\n");
+    }
+    else
+    {
+      lead_on = true;
+      max30003_synch();
+      printf("leadon\n");
+    }
+
+    if(lead_on)
+    {
+        if(true)
+        {
+        }
+    }
+  }
+}
+
 void app_main(void)
 {
     // Initialize NVS.
@@ -136,7 +166,7 @@ void app_main(void)
 
   	gpio_pad_select_gpio(14);
   	gpio_set_direction(14, GPIO_MODE_OUTPUT);
-  	gpio_set_level(14, HIGH);
+  	gpio_set_level(14, LOW);
 
 	xQueue_tcp = xQueueCreate(20, sizeof( struct Tcp_Message *));
 	if( xQueue_tcp==NULL )
@@ -149,11 +179,11 @@ void app_main(void)
     kalam_start_max30003();
     kalam32_adc_start();
 
-    uint32_t rgb_val = setrgb_val(0x1F,0x0,0x00);//printf("%x\n",rgb_val );
+    //uint32_t rgb_val = setrgb_val(0x1F,0x0,0x00);//printf("%x\n",rgb_val );
 		uint8_t brightness = 10;
 		uint8_t numofleds = 144;
 
-		apa102_setcolours(numofleds, rgb_val, brightness);
+		//apa102_setcolours(numofleds, rgb_val, brightness);
 
 	vTaskDelay(2000/ portTICK_PERIOD_MS);		//give sometime for max to settle
 
@@ -161,6 +191,8 @@ void app_main(void)
 	kalam_ble_Init();
 #endif
 
+
+    xTaskCreate(rainbow, "ws2812 rainbow demo", 4096, NULL, 10, NULL);
 #ifdef CONFIG_WIFIMODE_ENABLE					//configure the ssid/password under makemenuconfig/heartypatch configuration.
 	kalam_wifi_init();
     /* Wait for WiFI to show as connected */
