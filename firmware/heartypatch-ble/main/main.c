@@ -15,23 +15,20 @@
 #include "driver/spi_master.h"
 #include "driver/ledc.h"
 #include "bt.h"				//use this for esp-idf versions below 3.0 
-//#include "esp_bt.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/sdmmc_host.h"
 
-#include "mdns.h"
 #include "esp_log.h"
-#include "kalam32.h"
-#include "max30003.h"
-#include "kalam32_tcp_server.h"
-#include "ble.h"
-#include "hpadc.h"
+#include "heartypatch_main.h"
+#include "heartypatch_max30003.h"
+#include "heartypatch_tcp_server.h"
+#include "heartypatch_ble.h"
+#include "heartypatch_adc.h"
 
 #define TAG "heartypatch:"
 #define delay_ms(ms) vTaskDelay((ms) / portTICK_RATE_MS)
-#define KALAM32_MDNS_ENABLED    FALSE
-#define KALAM32_MDNS_NAME       "heartypatch"
+
 #define BUF_SIZE  1000
 
 extern xSemaphoreHandle print_mux;
@@ -43,7 +40,6 @@ static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT_kalam = BIT0;
 
 uint8_t* db;
-mdns_server_t * mdns = NULL;
 unsigned int global_heartRate ; 
 
 extern QueueHandle_t xQueue_tcp;
@@ -67,7 +63,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-void kalam_wifi_init(void)
+void heartypatch_wifi_init(void)
 {
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
@@ -85,12 +81,6 @@ void kalam_wifi_init(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
-
-#if KALAM32_MDNS_ENABLED == TRUE
-    esp_err_t err = mdns_init(TCPIP_ADAPTER_IF_STA, &mdns);
-    ESP_ERROR_CHECK( mdns_set_hostname(mdns, KALAM32_MDNS_NAME) );
-    ESP_ERROR_CHECK( mdns_set_instance(mdns, KALAM32_MDNS_NAME) );
-#endif
 
 }
 
@@ -115,23 +105,23 @@ void app_main(void)
 	
     max30003_initchip(PIN_SPI_MISO,PIN_SPI_MOSI,PIN_SPI_SCK,PIN_SPI_CS);
 
-    kalam_start_max30003();
-    kalam32_adc_start();
+    heartypatch_start_max30003();
+    heartypatch_adc_start();
 
 	vTaskDelay(2000/ portTICK_PERIOD_MS);		//give sometime for max to settle
 
 #ifdef CONFIG_BLE_MODE_ENABLE
-	kalam_ble_Init();		
+	heartypatch_ble_Init();		
 #endif
 	
 #ifdef CONFIG_WIFIMODE_ENABLE					//configure the ssid/password under makemenuconfig/heartypatch configuration.
-	kalam_wifi_init();
+	heartypatch_wifi_init();
     /* Wait for WiFI to show as connected */
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT_kalam,false, true, portMAX_DELAY);
     
 	/*only hr and rr is sending through tcp, to plot ECG, you need to configure the max30003 to read ecg data */
 	vTaskDelay(500/ portTICK_PERIOD_MS);
-    kalam_tcp_start();
+    heartypatch_tcp_start();
 #endif
      
 	

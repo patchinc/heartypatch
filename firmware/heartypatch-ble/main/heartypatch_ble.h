@@ -1,5 +1,5 @@
-#ifndef ble_h
-#define ble_h
+#ifndef heartypatch_ble_h
+#define heartypatch_ble_h
 
 #define GATTS_SERVICE_UUID_HR   0x180D
 #define GATTS_CHAR_UUID_HR      0x2A37
@@ -28,7 +28,7 @@
 #define SENSOR_CONTACT_DETECTED 0x06
 #define SENSOR_CONTACT_NOT_DETECTED 0x04
 
-void kalam_ble_Init(void);
+void heartypatch_ble_Init(void);
 
 void update_ble_atts(void(*update)(uint16_t),uint16_t value);
 void update_temp(uint16_t value);
@@ -42,6 +42,7 @@ void update_rmssd(uint16_t value);
 void update_pnn(uint16_t value);
 void update_rr(uint16_t value);
 void update_beat_blr(void);
+void update_arrhythmia(uint8_t value);
 
 
 #endif

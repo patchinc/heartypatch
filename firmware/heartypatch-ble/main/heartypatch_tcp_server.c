@@ -19,13 +19,12 @@
 #include "driver/uart.h"
 #include "driver/sdmmc_host.h"
 
-#include "kalam32_tcp_server.h"
+#include "heartypatch_tcp_server.h"
 #include "mdns.h"
 #include "esp_log.h"
-#include "kalam32.h"
-#include "max30003.h"
-//#include "max30205.h"
-#include "kalam32_tcp_server.h"
+#include "heartypatch_main.h"
+#include "heartypatch_max30003.h"
+#include "heartypatch_tcp_server.h"
 
 #define TAG "heartypatch:"
 #define HEARTYPATCH_TCP
@@ -253,7 +252,7 @@ void tcp_conn(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-void kalam_tcp_start(void)
+void heartypatch_tcp_start(void)
 {
 	xTaskCreate(&tcp_conn, "tcp_conn", 4096, NULL, 5, NULL);
  

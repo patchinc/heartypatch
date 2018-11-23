@@ -7,8 +7,8 @@
 #include "freertos/queue.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
-#include "hpadc.h"
-#include "ble.h"
+#include "heartypatch_adc.h"
+#include "heartypatch_ble.h"
 
 
 #define ADC1_CHANNEL (0)
@@ -94,7 +94,7 @@ void adc1task(void* arg)
     }
 }
 
-void kalam32_adc_start(void)
+void heartypatch_adc_start(void)
 {
 	xQueue_battery = xQueueCreate(2, sizeof( int ));
 	if( xQueue_battery==NULL )

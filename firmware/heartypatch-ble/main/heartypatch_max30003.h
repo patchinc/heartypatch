@@ -1,5 +1,5 @@
-#ifndef MAX30003_H_
-#define MAX30003_H_
+#ifndef heartypatch_max30003_h_
+#define heartypatch_max30003_h_
 
 #define WREG 0x00
 #define RREG 0x01
@@ -29,22 +29,18 @@
 #define MAX 20
 volatile unsigned int HR ,RR ;
 
- xQueueHandle rgbLedSem;
+xQueueHandle rgbLedSem;
 QueueHandle_t xQueue_tcp;
 
-void kalam_start_max30003();
+void heartypatch_start_max30003(void);
 void max30003_start_timer(void);
 void MAX30003_ReadID(void);
 void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs );
 uint8_t* max30003_read_send_data(void );
-//void arrhythmia(unsigned int array[MAX]);
 float pnn_ff(unsigned int queue_array[MAX]);
 float mean(unsigned int queue_array[MAX]);
 float sdnn_ff(unsigned int queue_array[]);
 int max(unsigned int array[]);
 int min(unsigned int array[]);
-//float trindex(unsigned int array[]);
-//void print(void *pvParameters);
-
 
 #endif

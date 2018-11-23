@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include<math.h>
+#include <math.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
@@ -14,8 +14,9 @@
 #include "driver/ledc.h"
 #include "driver/uart.h"
 
-#include "max30003.h"
-#include "ble.h"
+#include "heartypatch_max30003.h"
+#include "heartypatch_ble.h"
+#include "heartypatch_arrhythmia.h"
 
 uint8_t SPI_TX_Buff[4];
 uint8_t SPI_RX_Buff[10];
@@ -52,6 +53,8 @@ int max_t=0;
 int min_t=0;
 float pnn_f=0;
 float tri =0;
+float array_temp[MAX]={0.0};
+extern uint8_t arrhythmiadetector;
 
 
 void max30003_spi_pre_transfer_callback(spi_transaction_t *t)
@@ -94,24 +97,24 @@ void max30003_start_timer(void)
 
 void MAX30003_Reg_Write (unsigned char WRITE_ADDRESS, unsigned long data)
 {
-  uint8_t wRegName = (WRITE_ADDRESS<<1) | WREG;
+    uint8_t wRegName = (WRITE_ADDRESS<<1) | WREG;
 
-  uint8_t txData[4];
+    uint8_t txData[4];
 
-  txData[0]=wRegName;
-  txData[1]=(data>>16);
-  txData[2]=(data>>8);
-  txData[3]=(data);
+    txData[0]=wRegName;
+    txData[1]=(data>>16);
+    txData[2]=(data>>8);
+    txData[3]=(data);
 
-  esp_err_t ret;
-  spi_transaction_t t;
+    esp_err_t ret;
+    spi_transaction_t t;
 
-  memset(&t, 0, sizeof(t));       //Zero out the transaction
+    memset(&t, 0, sizeof(t));       //Zero out the transaction
 
-  t.length=32;                 //Len is in bytes, transaction length is in bits.
-  t.tx_buffer=&txData;               //Data
-  ret=spi_device_transmit(spi, &t);  //Transmit!
-  assert(ret==ESP_OK);            //Should have had no issues.
+    t.length=32;                 //Len is in bytes, transaction length is in bits.
+    t.tx_buffer=&txData;               //Data
+    ret=spi_device_transmit(spi, &t);  //Transmit!
+    assert(ret==ESP_OK);            //Should have had no issues.
 }
 
 
@@ -171,18 +174,14 @@ void max30003_reg_read(unsigned char WRITE_ADDRESS)
 
 void read_data(void *pvParameters)			// calls max30003read_data to update to aws_iot.
 {
- 	uint8_t* db;
-	spi_transaction_t t;
-    esp_err_t stat;
-    int y=0;
 
-   while(1)
+    while(1)
     {
-		 xSemaphoreTake(max30003intSem,  portMAX_DELAY);//Wait until slave is ready
-	   
-		 db = max30003_read_send_data();
-		 xSemaphoreGive(updateRRSemaphore);
-	   	 vTaskDelay(10/portTICK_RATE_MS);
+        xSemaphoreTake(max30003intSem,  portMAX_DELAY);//Wait until slave is ready
+
+        max30003_read_send_data();
+        xSemaphoreGive(updateRRSemaphore);
+        vTaskDelay(10/portTICK_RATE_MS);
     }
 }
 
@@ -265,14 +264,12 @@ void max30003_initchip(int pin_miso, int pin_mosi, int pin_sck, int pin_cs )
     MAX30003_Reg_Write(MNGR_INT, 0x000024);  //MAX30003_Reg_Write(MNGR_INT, 0x000014);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 	
-	MAX30003_Reg_Write(EN_INT,0x000401);
+	  MAX30003_Reg_Write(EN_INT,0x000401);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     max30003_synch();
 	
-	max30003_drdy_interrupt_enable();
-
-
+	  max30003_drdy_interrupt_enable();
 }
 
 uint8_t* max30003_read_send_data(void)
@@ -287,121 +284,107 @@ uint8_t* max30003_read_send_data(void)
     rtor = ((rtor >>2) & 0x3fff) ;
 
     float hr =  60 /((float)rtor*0.0078125);
-    float rtor_ms = ((float)rtor*0.0078125);
+    //float rtor_ms = ((float)rtor*0.0078125);
 	  
     global_heartRate = (unsigned int)hr ; 
     HR = (unsigned int)hr;  // type cast to int
     RR = (unsigned int)((float)rtor*7.8125) ;  //8ms
     k++;
  
-	printf("hr %d\n",HR);
     update_hr(HR);
     update_rr(RR);
 
-
     if(rear == MAX-1)
     {
-	   for(i=0;i<(MAX-1);i++)
-	   {
-		   array[i]=array[i+1];
-	   }
-		   array[MAX-1] = RR;	  
+      for(i=0;i<(MAX-1);i++)
+      {
+       array[i]=array[i+1];
+      }
+       array[MAX-1] = RR;	  
     }else
     {		  
-	   rear++;
-	   array[rear] = RR;
+      rear++;
+      array[rear] = RR;
     }
 	
-   if(k>=MAX)
-   {	
-				
-       max_f = max(array);
-	   min_f = min(array);
-	   mean_f = mean(array);
-	   sdnn_f = sdnn_ff(array);
-	   pnn_f = pnn_ff(array);	
-	
-	   update_mean((int)(mean_f*100));
-       update_sdnn((uint16_t)(sdnn_f*100));
-       update_pnn((uint16_t)(per_pnn*100));             
-   }						
-	  
-   DataPacketHeader[0] = 0x0A;
-   DataPacketHeader[1] = 0xFA;
-   DataPacketHeader[2] = 0x0C;
-   DataPacketHeader[3] = 0;
-   DataPacketHeader[4] = 0x02;
+    if(k>=MAX)
+    {	
 
-   DataPacketHeader[5] = ecgdata;
-   DataPacketHeader[6] = ecgdata>>8;
-   DataPacketHeader[7] = ecgdata>>16;
-   DataPacketHeader[8] = ecgdata>>24;
+      max_f = max(array);
+      min_f = min(array);
+      mean_f = mean(array);
+      sdnn_f = sdnn_ff(array);
+      pnn_f = pnn_ff(array);
 
-   DataPacketHeader[9] =  RR ;
-   DataPacketHeader[10] = RR >>8;
-   DataPacketHeader[11] = 0x00;
-   DataPacketHeader[12] = 0x00;
+      update_mean((int)(mean_f*100));
+      update_sdnn((uint16_t)(sdnn_f*100));
+      update_pnn((uint16_t)(per_pnn*100));
 
-   DataPacketHeader[13] = HR ;
-   DataPacketHeader[14] = HR >>8;
-   DataPacketHeader[15] = 0x00;
-   DataPacketHeader[16] = 0x00;
 
-   DataPacketHeader[17] = 0x00;
-   DataPacketHeader[18] = 0x0b;
+      for(i=0;i<MAX;i++)
+      {
+       array_temp[i] = ((float)(array[i])/1000);
+
+      }
+
+      challenge(array_temp);
+      update_arrhythmia(arrhythmiadetector); 
+    }
 
    return  DataPacketHeader;
-		
 }
 
 int max(unsigned int array[])
 {  
-   for(i=0;i<MAX;i++)
-   {
-		if(array[i]>max_t)
-		{
-			max_t = array[i];
-		}
-   }
-   return max_t;
+    for(i=0;i<MAX;i++)
+    {
+    if(array[i]>max_t)
+    {
+    	max_t = array[i];
+    }
+    }
+    return max_t;
 }
 
 int min(unsigned int array[])
 {   
-	min_t = max_f;
-	for(i=0;i<MAX;i++)
-	{ if(array[i]< min_t)
-		{
-		min_t = array[i];	
-		}
-	}
-	return min_t;
+  	min_t = max_f;
+  	for(i=0;i<MAX;i++)
+
+  	{ if(array[i]< min_t)
+  		{
+  		min_t = array[i];	
+  		}
+  	}
+  	return min_t;
 }
 
 float mean(unsigned int array[])
 { 
     int sum = 0;
-    float mean_rr;	
-	for(i=0;i<(MAX);i++)
-	{
-		sum = sum + array[i];
-	}
-	mean_rr = (((float)sum)/ MAX);	
-	return mean_rr;
+    float mean_rr;
+
+    for(i=0;i<(MAX);i++)
+    {
+      sum = sum + array[i];
+    }
+
+    mean_rr = (((float)sum)/ MAX);	
+    return mean_rr;
 }	
 
 float sdnn_ff(unsigned int array[])
 {
-	int sumsdnn = 0;
-	int diff;
-	
+  	int sumsdnn = 0;
+  	int diff;
+  	
     for(i=0;i<(MAX);i++)
-	{
-		diff = (array[i]-(mean_f));
-		diff = diff*diff;
-		sumsdnn = sumsdnn + diff;		
-	}
-    
+    {
+      diff = (array[i]-(mean_f));
+      diff = diff*diff;
+      sumsdnn = sumsdnn + diff;		
+    }
+
     sdnn = (sqrt(sumsdnn/(MAX)));
     return	 sdnn;
 }
@@ -410,32 +393,33 @@ float pnn_ff(unsigned int array[])
 { 
     unsigned int pnn50[MAX];
     count = 0;
-	sqsum = 0;
-	for(i=0;i<(MAX-2);i++)
-	{
-	 pnn50[i]= abs(array[i+1] - array[i]);
-     sqsum = sqsum + (pnn50[i]*pnn50[i]);
-         if(pnn50[i]>50)
-         {
-             count = count + 1;		 
-         }
-	}
+    sqsum = 0;
+    
+    for(i=0;i<(MAX-2);i++)
+    {
+      pnn50[i]= abs(array[i+1] - array[i]);
+      sqsum = sqsum + (pnn50[i]*pnn50[i]);
+      if(pnn50[i]>50)
+      {
+       count = count + 1;		 
+      }
+    }
 
-	per_pnn = ((float)count/MAX)*100;
-	rmssd = sqrt(sqsum/(MAX-1));
-	update_rmssd((uint16_t)(rmssd*100));
-	return per_pnn;
+    per_pnn = ((float)count/MAX)*100;
+    rmssd = sqrt(sqsum/(MAX-1));
+    update_rmssd((uint16_t)(rmssd*100));
+    return per_pnn;
 }
 
-void kalam_start_max30003()
+void heartypatch_start_max30003(void)
 {
-    TaskHandle_t rd_task;
     updateRRSemaphore = xSemaphoreCreateMutex();
     max30003intSem=xSemaphoreCreateBinary();
     rgbLedSem = xSemaphoreCreateBinary();
     xTaskCreate(&read_data, "read_data", 4096, NULL, 4, NULL);
 
 }
+
 void heartyPatch_send_data(uint8_t *dataToSend, int dataLength)
 {
 

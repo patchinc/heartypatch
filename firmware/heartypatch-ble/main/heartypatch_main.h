@@ -1,4 +1,7 @@
- #define PIN_NUM_0   17
+#ifndef heartypatch_main_h
+#define heartypatch_main_h
+
+#define PIN_NUM_0   17
 #define PIN_NUM_1   14
 #define PIN_NUM_2   13
 #define PIN_NUM_4   2
@@ -24,5 +27,4 @@
 #define PIN_SPI_MISO 19
 #define PIN_SPI_SCK  18
 
-
-void kalam32_uart_init(void);
+#endif

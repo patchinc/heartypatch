@@ -10,25 +10,24 @@
 #include "nvs_flash.h"
 //#include "esp_bt.h"
 #include "bt.h"
-#include "bta_api.h"
+//#include "bta_api.h"
 #include "sdkconfig.h"
 
 #include "esp_gap_ble_api.h"
 #include "esp_gatts_api.h"
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
-#include "ble.h"
+#include "heartypatch_ble.h"
+#include "heartypatch_arrhythmia.h"
 							
 uint8_t rr_service_uuid[16]= {0xd0,0x36,0xba,0x8c,0xda,0xd1,0x4c,0xae,0xb8,0x7d,0x48,0x44,0x91,0x74,0x5c,0xcd};		//custom 128bit service UUID for RR
 uint8_t rr_char_uuid[16]= {0xdc,0xad,0x7f,0xc4,0x23,0x90,0x4d,0xd4,0x96,0x8d,0x0f,0x97,0x6f,0xa8,0xbf,0x01};
-
 
 static void gatts_profile_hr_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 static void gatts_profile_hrv_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 static void gatts_profile_bat_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
 uint8_t beat_flag = 0;
-
 uint16_t attr_handle_hr = 0x002a;
 uint16_t attr_handle_rr = 0x002a;
 uint16_t attr_handle_bat = 0x002a;
@@ -53,6 +52,7 @@ struct ble_data_att
 	uint16_t rmssd;
 	int mean;
 	uint16_t sdnn;
+    uint8_t arrhythmiadetector; 
 
 }ble_data_update;
 
@@ -154,6 +154,7 @@ static struct gatts_profile_inst gl_profile_tab[PROFILE_NUM] =
 
 };
 
+
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     switch (event) 
@@ -176,6 +177,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
         break;
     }
 }
+
 
 static void gatts_profile_hr_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     switch (event)
@@ -257,6 +259,7 @@ static void gatts_profile_hr_event_handler(esp_gatts_cb_event_t event, esp_gatt_
     }
 }
 
+
 static void gatts_profile_bat_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     switch (event) {
     case ESP_GATTS_REG_EVT:
@@ -319,7 +322,6 @@ static void gatts_profile_bat_event_handler(esp_gatts_cb_event_t event, esp_gatt
         break;
     }
 }
-
 
 
 static void gatts_profile_hrv_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
@@ -483,17 +485,20 @@ void update_beat_blr(void)
 
 	beat_flag = 1;
 }
-
+void update_arrhythmia(uint8_t value)
+{
+    ble_data_update.arrhythmiadetector=value;
+}
 
 static void notify_task(void* arg) {
     
-	  while (true) {
+	while (true) {
 		  
 		while (gatts_if_for_hr == ESP_GATT_IF_NONE) {			//checking the connection
 				vTaskDelay(5000/ portTICK_PERIOD_MS);
 		}
 				  		  
-		vTaskDelay(1500/ portTICK_PERIOD_MS);
+		vTaskDelay(10/ portTICK_PERIOD_MS);
 			 
 		uint8_t value_arr_hr[2];
 		uint8_t value_arr_hrv_anls[15];	 			  			  
@@ -516,27 +521,26 @@ static void notify_task(void* arg) {
  		value_arr_hrv_anls[9] = (ble_data_update.stress>>8);
  		value_arr_hrv_anls[10] = (ble_data_update.rmssd);
  		value_arr_hrv_anls[11] = (ble_data_update.rmssd>>8);
-		value_arr_hrv_anls[12] = (uint8_t)ble_data_update.hr;
+		//value_arr_hrv_anls[12] = (uint8_t)ble_data_update.hr;
+        value_arr_hrv_anls[12] = ble_data_update.arrhythmiadetector;
+       // ESP_LOGE(GATTS_TAG, "arr val%d \n", ble_data_update.arrhythmiadetector);
 			 		  	  						
 		if(beat_flag) {
 				  			  
-				  esp_ble_gatts_send_indicate(gatts_if_for_hr, conn_id_indicate_hr, attr_handle_hr, 4, value_arr_hr, false);
-				  esp_ble_gatts_send_indicate(gatts_if_for_rr, conn_id_indicate_rr, attr_handle_rr, 13, value_arr_hrv_anls, false);
-				  
-				  beat_flag = 0;
+            esp_ble_gatts_send_indicate(gatts_if_for_hr, conn_id_indicate_hr, attr_handle_hr, 4, value_arr_hr, false);
+            esp_ble_gatts_send_indicate(gatts_if_for_rr, conn_id_indicate_rr, attr_handle_rr, 13, value_arr_hrv_anls, false);
+
+            beat_flag = 0;
 		}
 		  
 	}
 }
 
 
-
-void kalam_ble_Init(void)
+void heartypatch_ble_Init(void)
 {
 
 	esp_err_t ret;
-
-	//esp_bt_controller_init();
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();		//for new idf versions
     ret = esp_bt_controller_init(&bt_cfg);
