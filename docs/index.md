@@ -37,7 +37,7 @@ HeartyPatch at any time can work in only ONE of the following modes. Wi-Fi and B
 ## Bluetooth LE Mode
 With the preloaded firmware, the HeartyPatch will do heart-rate and R-R interval measurement and send it over BLE through a standard [Heart-rate BLE service](https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.heart_rate.xml), as well as a separate custom HRV service that will provide parameters used for HRV analysis such as SD, Mean RR, PNN50 and SDNN.
 
-![BLE mode](images/BLE mode.jpg)
+<img src="images/BLE mode.jpg" width="300" height="100" />
 
 ## Continuous ECG Streaming mode over WiFi/TCP
 
