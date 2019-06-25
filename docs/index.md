@@ -51,6 +51,88 @@ It is important to always keep your firmware up-to-date for best results. We kee
 
 Be on the lookout for new firmware releases on our Github releases page at https://github.com/Protocentral/protocentral_heartypatch
 
+Download the latest binary files from the [HeartyPatch Github releases page](https://github.com/Protocentral/protocentral_heartypatch/releases/latest). Binary file names end with xx_bin.zip.
+
+Unzip the files into a folder. Now, plug in your HeartyPatch to your computer through any USB port and follow the following procedures according to your computer's operating system.
+
+## Updating the firmware on MacOS/linux
+
+[esptool](https://github.com/espressif/esptool) is a Python-based utlity program to download binary files onto ESP32 chips. Please follow the following steps to install esptool.
+
+Before starting, you will need to make sure you have Python 2/3 installed on your computer.
+
+Open the termimal on your MacOS/Linux computer and run the command given below to download latest stable esptool.py release.
+```c
+pip install esptool
+```
+Now you should be able to run *esptool.py* from the command line. If installation fails, please refer to the [esptool page](https://github.com/espressif/esptool) for possible solutions.
+
+Download the latest binary files from the [HeartyPatch Github releases page](https://github.com/Protocentral/protocentral_heartypatch/releases/latest). Binary file names end with xx_bin.zip.
+
+Unzip the files into a folder.
+
+Now, plug in your HeartyPatch to your computer through any USB port and run the following command from the same folder in which you have unzipped the files.
+
+```c
+esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 HeartyPatchBle.bin 0x8000 partitions_singleapp.bin
+```
+
+Make sure to replace *<your-port-name>* with the name of the port to which your HeartyPatch. If you get a permission denied error, please run this in "sudo" mode.
+
+If all goes well, you should see the following output on the terminal.
+
+![](images/README-ce4ed93a.png)
+
+Congratulations ! You have now successfully uploaded the firmware to your HeartyPatch.
+
+## Updating the firmware on Windows
+
+## Install the ESP32 Flash Download Tool
+
+The ESP32 Flash Download Tool is the official Espressif Download tool that runs on Windows platform. The tool can be used to modify and generate init BINs, generate consolidated BIN files or program multiple chips for production runs.
+
+### Installation Procedures  
+
+* [Download the ESP32 tool from Espressif website in tools section](https://www.espressif.com/en/products/hardware/esp32/resources) as shown below
+
+![](images/README-7d7dd261.png)
+
+* Once downloaded, open the flash_download_tools_v3.6.6.exe application from the downloaded folder as shown below
+
+![](images/README-45d2e9ef.png)
+
+* When the program opens, select *ESP32 Download tool* from the buttons.
+
+![](images/README-6bc1f138.png)
+
+* In the resulting window that opens, make sure to select the following options
+![](images/README-a0fc4771.png)
+
+1.	SPI download tab. In general, you should use SPI download mode.
+
+2.	Add the bin files downloaded earlier to the ESP32 download tool interface one by one as listed below.
+
+  |S.no| HeartyPatch Bin Files   |Address      |
+  |----------------- |:--------------------:|-----------------:|
+  | 1              | Bootloader.bin                  |  0x1000  |             
+  | 2       | HeartyPatchBle.bin                   |  0x10000           |
+  | 3            | Partitions_singleapp.bin                   |  0x8000     |
+
+3.	Click on the check boxes to select the bin files.
+4.	Crystal Frequency for heartypatch should be set as 40M.
+5.	SPI Flash speed for heartypatch should be set as 26.7MHz.
+6.	SPI Mode for heartypatch should be set as DIO mode.
+7.	Flash memory size for heartypatch should be set as 32Mbit.
+8.	Select the port number of your heartypatch device and set baud rate to 115200.
+9.	Current status: Tells about the current operation status. Whether the download tool is idle or running, etc.
+10. Click Start button to start programming.
+11.	Progress bar indicates firmware uploads program. Once bin files is uploaded the indication status displays finish.
+12.	Program displays PHY MAC IDs for Wi-Fi, BLE, ethernet, etc.
+
+Congratulations ! You have now successfully uploaded the firmware to your HeartyPatch.
+
+# Compiling your own firmware (advanced, optional)
+
 The firmware for the HeartyPatch's on-board Espressif ESP32 chip uses the [esp-idf framework](https://github.com/espressif/esp-idf)
  for development. You will need to install and configure the following components to setup a development environment:
 
