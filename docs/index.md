@@ -109,12 +109,10 @@ The ESP32 Flash Download Tool is the official Espressif Download tool that runs 
 1.	SPI download tab. In general, you should use SPI download mode.
 
 2.	Add the bin files downloaded earlier to the ESP32 download tool interface one by one as listed below.
-
-  |S.no| HeartyPatch Bin Files   |Address      |
-  |----------------- |:--------------------:|-----------------:|
-  | 1              | Bootloader.bin                  |  0x1000  |             
-  | 2       | HeartyPatchBle.bin                   |  0x10000           |
-  | 3            | Partitions_singleapp.bin                   |  0x8000     |
+      
+    * Bootloader.bin                   0x1000              
+    * HeartyPatchBle.bin               0x10000           
+    * Partitions_singleapp.bin         0x8000     
 
 3.	Click on the check boxes to select the bin files.
 4.	Crystal Frequency for heartypatch should be set as 40M.
