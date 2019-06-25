@@ -114,6 +114,7 @@ The ESP32 Flash Download Tool is the official Espressif Download tool that runs 
     * HeartyPatchBle.bin               0x10000           
     * Partitions_singleapp.bin         0x8000     
 
+
 3.	Click on the check boxes to select the bin files.
 4.	Crystal Frequency for heartypatch should be set as 40M.
 5.	SPI Flash speed for heartypatch should be set as 26.7MHz.
