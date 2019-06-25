@@ -87,13 +87,11 @@ Congratulations ! You have now successfully uploaded the firmware to your Hearty
 
 ## Updating the firmware on Windows
 
-## Install the ESP32 Flash Download Tool
-
 The ESP32 Flash Download Tool is the official Espressif Download tool that runs on Windows platform. The tool can be used to modify and generate init BINs, generate consolidated BIN files or program multiple chips for production runs.
 
-### Installation Procedures  
+### Installing ESP32 Flash Download Tool
 
-* [Download the ESP32 tool from Espressif website in tools section](https://www.espressif.com/en/products/hardware/esp32/resources) as shown below
+* Download the ESP32 tool from [Espressif's website in tools section](https://www.espressif.com/en/products/hardware/esp32/resources) as shown below
 
 ![](images/README-7d7dd261.png)
 
