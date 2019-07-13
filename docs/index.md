@@ -73,8 +73,16 @@ Unzip the files into a folder.
 
 Now, plug in your HeartyPatch to your computer through any USB port and run the following command from the same folder in which you have unzipped the files.
 
+## Heartypatch BLE Command
+
 ```c
 esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 HeartyPatchBle.bin 0x8000 partitions_singleapp.bin
+```
+
+## Heartypatch TCP Command
+
+```c
+esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 heartypatch_tcp.bin 0x8000 partitions_singleapp.bin
 ```
 
 Make sure to replace *<your-port-name>* with the name of the port to which your HeartyPatch. If you get a permission denied error, please run this in "sudo" mode.
@@ -109,10 +117,21 @@ The ESP32 Flash Download Tool is the official Espressif Download tool that runs 
 1.	SPI download tab. In general, you should use SPI download mode.
 
 2.	Add the bin files downloaded earlier to the ESP32 download tool interface one by one as listed below.
+
+
+### Heartypatch BLE Command
+
       
-    * Bootloader.bin                   0x1000              
+    * bootloader.bin                   0x1000              
     * HeartyPatchBle.bin               0x10000           
-    * Partitions_singleapp.bin         0x8000     
+    * partitions_singleapp.bin         0x8000    
+    
+    
+### Heartypatch TCP Command
+
+    * bootloader.bin                   0x1000              
+    * heartypatch_tcp.bin              0x10000           
+    * partitions_singleapp.bin         0x8000 
 
 
 3.	Click on the check boxes to select the bin files.
