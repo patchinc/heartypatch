@@ -73,13 +73,21 @@ Unzip the files into a folder.
 
 Now, plug in your HeartyPatch to your computer through any USB port and run the following command from the same folder in which you have unzipped the files.
 
-## Heartypatch BLE Command
+## Updating BLE firmware in your Heartypatch device 
+* Open the unzipped Heartypatch BLE bin files path in your terminal
+* Run the command given below
 
 ```c
 esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 HeartyPatchBle.bin 0x8000 partitions_singleapp.bin
 ```
 
-## Heartypatch TCP Command
+## Updating TCP firmware in your Heartypatch device
+* Open the unzipped Heartypatch TCP bin files path in your terminal
+* Run the command given below
+* Create a hotspot with ssid and password given below
+* SSID - Heartypatch
+* Password - 12345678
+* Once firmware uploaded connect your system with the created hotspot to see TCP output in processing GUI.
 
 ```c
 esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 heartypatch_tcp.bin 0x8000 partitions_singleapp.bin
