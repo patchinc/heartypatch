@@ -84,15 +84,18 @@ esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m
 ## Updating TCP firmware in your Heartypatch device
 * Open the unzipped Heartypatch TCP bin files path in your terminal
 * Run the command given below
-* We have hardcoded the SSID and Password in make menuconfig, hence you have to connect with the particular ssid and password to see TCP output.
+
+```c
+esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 heartypatch_tcp.bin 0x8000 partitions_singleapp.bin
+```
+
+* We have hardcoded the SSID and Password, hence you have to connect your system with the below provided ssid and password.
 * Create a hotspot with ssid and password given below
 * SSID - Heartypatch
 * Password - 12345678
 * Once firmware uploaded connect your system with the created hotspot to see TCP output in processing GUI.
 
-```c
-esptool.py --port <your-port-name> write_flash --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x10000 heartypatch_tcp.bin 0x8000 partitions_singleapp.bin
-```
+
 
 Make sure to replace *<your-port-name>* with the name of the port to which your HeartyPatch. If you get a permission denied error, please run this in "sudo" mode.
 
